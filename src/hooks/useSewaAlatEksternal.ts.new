@@ -1,0 +1,339 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
+
+interface SewaAlatEksternal {
+  id?: string;
+  namaAlat: string;
+  vendor: string;
+  lokasiProyek: string;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  biayaPerHari: number;
+  biayaMobilisasi: number;
+  biayaDemobilisasi: number;
+  biayaUangMakanOperator: number;
+  totalBiaya: number;
+  status: string;
+}
+
+// Definisikan query key yang konsisten
+const SEWA_ALAT_EKSTERNAL_QUERY_KEY = 'sewa_alat_eksternal';
+
+export const useSewaAlatEksternal = (options = {}) => {
+  return useQuery({
+    queryKey: [SEWA_ALAT_EKSTERNAL_QUERY_KEY],
+    queryFn: async () => {
+      console.log('Fetching sewa alat eksternal data');
+      const { data, error } = await supabase
+        .from('sewa_alat_eksternal')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching sewa alat eksternal:', error);
+        throw error;
+      }
+      
+      return data?.map((item: any) => ({
+        id: item.id,
+        namaAlat: item.nama_alat,
+        vendor: item.vendor,
+        lokasiProyek: item.lokasi_proyek,
+        tanggalMulai: item.tanggal_mulai,
+        tanggalSelesai: item.tanggal_selesai,
+        biayaPerHari: Number(item.biaya_per_hari) || 0,
+        biayaMobilisasi: Number(item.biaya_mobilisasi) || 0,
+        biayaDemobilisasi: Number(item.biaya_demobilisasi) || 0,
+        biayaUangMakanOperator: Number(item.biaya_uang_makan_operator) || 0,
+        totalBiaya: Number(item.total_biaya) || 0,
+        status: item.status || 'Aktif'
+      })) || [];
+    },
+    staleTime: 0, // Nonaktifkan cache untuk selalu mendapatkan data terbaru
+    ...options
+  });
+};
+
+export interface SewaAlatInput {
+  id?: string;
+  namaAlat: string;
+  vendor: string;
+  lokasiProyek: string;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  biayaPerHari: number | string;
+  biayaMobilisasi: number | string;
+  biayaDemobilisasi: number | string;
+  biayaUangMakanOperator: number | string;
+  totalBiaya: number | string;
+  status?: string;
+}
+
+export const useAddSewaAlatEksternal = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: SewaAlatInput) => {
+      // Dapatkan sesi pengguna yang sedang login
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('Authentication error:', sessionError);
+        throw new Error('Anda harus login untuk melakukan aksi ini');
+      }
+      
+      // Dapatkan user ID atau gunakan nilai default jika tidak tersedia
+      const userId = session?.user?.id || '00000000-0000-0000-0000-000000000000';
+
+      // Validasi data sebelum disimpan
+      if (!data.namaAlat || !data.vendor || !data.lokasiProyek || !data.tanggalMulai || !data.tanggalSelesai) {
+        throw new Error('Semua field wajib diisi');
+      }
+
+      // Pastikan nilai numerik valid
+      const biayaPerHari = Number(data.biayaPerHari) || 0;
+      const biayaMobilisasi = Number(data.biayaMobilisasi) || 0;
+      const biayaDemobilisasi = Number(data.biayaDemobilisasi) || 0;
+      const biayaUangMakanOperator = Number(data.biayaUangMakanOperator) || 0;
+      const totalBiaya = Number(data.totalBiaya) || 0;
+
+      // Siapkan data untuk disimpan
+      const insertData: Record<string, any> = {
+        nama_alat: data.namaAlat.trim(),
+        vendor: data.vendor.trim(),
+        lokasi_proyek: data.lokasiProyek.trim(),
+        tanggal_mulai: data.tanggalMulai,
+        tanggal_selesai: data.tanggalSelesai,
+        biaya_per_hari: biayaPerHari,
+        biaya_mobilisasi: biayaMobilisasi,
+        biaya_demobilisasi: biayaDemobilisasi,
+        biaya_uang_makan_operator: biayaUangMakanOperator,
+        total_biaya: totalBiaya,
+        status: data.status || 'Aktif',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Hanya tambahkan created_by jika kolomnya ada
+      if (session?.user?.id) {
+        insertData.created_by = userId;
+        insertData.updated_by = userId;
+      }
+
+      console.log('Inserting data:', insertData);
+      
+      try {
+        // Coba insert data
+        const { data: result, error } = await supabase
+          .from('sewa_alat_eksternal')
+          .insert(insertData)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        console.log('Data berhasil disimpan:', result);
+        return result;
+      } catch (error: any) {
+        console.error('Error saat menyimpan data:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          stack: error.stack
+        });
+        
+        // Jika error karena created_by tidak ada, coba tanpa created_by
+        if (error.message.includes('created_by')) {
+          console.log('Mencoba menyimpan tanpa created_by');
+          const { created_by, updated_by, ...dataWithoutUser } = insertData;
+          
+          const { data: result, error: retryError } = await supabase
+            .from('sewa_alat_eksternal')
+            .insert(dataWithoutUser)
+            .select()
+            .single();
+            
+          if (retryError) throw retryError;
+          return result;
+        }
+        
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // Invalidate queries untuk memastikan data terbaru diambil
+      queryClient.invalidateQueries({ 
+        queryKey: [SEWA_ALAT_EKSTERNAL_QUERY_KEY] 
+      });
+      
+      // Tampilkan notifikasi sukses
+      toast.success('Data sewa alat eksternal berhasil disimpan', {
+        description: 'Data telah berhasil ditambahkan ke database.'
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Mutation error:', error);
+      
+      // Tampilkan notifikasi error yang lebih deskriptif
+      toast.error('Gagal menyimpan data', {
+        description: error.message || 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.'
+      });
+    }
+  });
+};
+
+export const useUpdateSewaAlatEksternal = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: SewaAlatInput) => {
+      // Dapatkan sesi pengguna yang sedang login
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('Authentication error:', sessionError);
+        throw new Error('Anda harus login untuk melakukan aksi ini');
+      }
+      
+      if (!data.id) {
+        throw new Error('ID sewa alat tidak valid');
+      }
+
+      // Pastikan nilai numerik valid
+      const biayaPerHari = Number(data.biayaPerHari) || 0;
+      const biayaMobilisasi = Number(data.biayaMobilisasi) || 0;
+      const biayaDemobilisasi = Number(data.biayaDemobilisasi) || 0;
+      const biayaUangMakanOperator = Number(data.biayaUangMakanOperator) || 0;
+      const totalBiaya = Number(data.totalBiaya) || 0;
+
+      // Siapkan data untuk diupdate
+      const updateData: Record<string, any> = {
+        nama_alat: data.namaAlat.trim(),
+        vendor: data.vendor.trim(),
+        lokasi_proyek: data.lokasiProyek.trim(),
+        tanggal_mulai: data.tanggalMulai,
+        tanggal_selesai: data.tanggalSelesai,
+        biaya_per_hari: biayaPerHari,
+        biaya_mobilisasi: biayaMobilisasi,
+        biaya_demobilisasi: biayaDemobilisasi,
+        biaya_uang_makan_operator: biayaUangMakanOperator,
+        total_biaya: totalBiaya,
+        status: data.status || 'Aktif',
+        updated_at: new Date().toISOString()
+      };
+      
+      // Hanya tambahkan updated_by jika kolomnya ada
+      if (session?.user?.id) {
+        updateData.updated_by = session.user.id;
+      }
+
+      console.log('Updating data:', updateData);
+      
+      try {
+        // Coba update data
+        const { data: result, error } = await supabase
+          .from('sewa_alat_eksternal')
+          .update(updateData)
+          .eq('id', data.id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        console.log('Data berhasil diperbarui:', result);
+        return result;
+      } catch (error: any) {
+        console.error('Error saat memperbarui data:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          stack: error.stack
+        });
+        
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // Invalidate queries untuk memastikan data terbaru diambil
+      queryClient.invalidateQueries({ 
+        queryKey: [SEWA_ALAT_EKSTERNAL_QUERY_KEY] 
+      });
+      
+      // Tampilkan notifikasi sukses
+      toast.success('Data sewa alat eksternal berhasil diperbarui', {
+        description: 'Data telah berhasil diperbarui di database.'
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Update error:', error);
+      
+      // Tampilkan notifikasi error yang lebih deskriptif
+      toast.error('Gagal memperbarui data', {
+        description: error.message || 'Terjadi kesalahan saat memperbarui data. Silakan coba lagi.'
+      });
+    }
+  });
+};
+
+export const useDeleteSewaAlatEksternal = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Dapatkan sesi pengguna yang sedang login
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('Authentication error:', sessionError);
+        throw new Error('Anda harus login untuk melakukan aksi ini');
+      }
+      
+      console.log('Mencoba menghapus data dengan ID:', id);
+      
+      try {
+        // Coba hapus data
+        const { error } = await supabase
+          .from('sewa_alat_eksternal')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        console.log('Data berhasil dihapus');
+        return id;
+      } catch (error: any) {
+        console.error('Error saat menghapus data:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          stack: error.stack
+        });
+        
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // Invalidate queries untuk memastikan data terbaru diambil
+      queryClient.invalidateQueries({ 
+        queryKey: [SEWA_ALAT_EKSTERNAL_QUERY_KEY] 
+      });
+      
+      // Tampilkan notifikasi sukses
+      toast.success('Data sewa alat eksternal berhasil dihapus', {
+        description: 'Data telah berhasil dihapus dari database.'
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Delete error:', error);
+      
+      // Tampilkan notifikasi error yang lebih deskriptif
+      toast.error('Gagal menghapus data', {
+        description: error.message || 'Terjadi kesalahan saat menghapus data. Silakan coba lagi.'
+      });
+    }
+  });
+};

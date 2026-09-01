@@ -1,0 +1,183 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
+import svgr from 'vite-plugin-svgr';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { fileURLToPath } from 'url';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // Disable TypeScript checking entirely for development
+  esbuild: mode === 'development' ? false : {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' },
+  },
+  // Enable detailed logging
+  logLevel: 'info',
+  // Improve error messages
+  clearScreen: false,
+  
+  // Set the base URL for the app
+  base: '/',
+  
+  server: {
+    port: 8080,
+    strictPort: true,
+    host: true,
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+    },
+  },
+  
+  // Optimize dependencies
+  optimizeDeps: {
+    exclude: [
+      'vite-plugin-node-polyfills',
+      'vite-plugin-node-polyfills/shims',
+      'vite-plugin-node-polyfills/shims/process',
+      'vite-plugin-node-polyfills/shims/buffer',
+      'vite-plugin-node-polyfills/shims/global'
+    ],
+    esbuildOptions: {
+      // Node.js global to browser globalThis
+      define: {
+        global: 'globalThis',
+      },
+      // Enable esbuild polyfill for Node.js globals and built-ins
+      target: 'es2020',
+    },
+  },
+  
+  // Enable source maps for better debugging
+  build: {
+    sourcemap: true,
+    minify: mode === 'production' ? 'esbuild' : false,
+    target: 'es2020',
+    // Force clean build by clearing output directory
+    emptyOutDir: true,
+    // Change output directory to avoid conflicts
+    outDir: mode === 'development' ? 'dist-dev' : 'dist',
+    modulePreload: {
+      polyfill: true
+    },
+    rollupOptions: {
+      external: [],
+      output: {
+        format: 'es',
+        manualChunks: undefined,
+        inlineDynamicImports: true,
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM',
+        },
+      },
+      onwarn(warning, warn) {
+        if (warning.code === 'EVAL') return;
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
+        warn(warning);
+      },
+    }
+  },
+  plugins: [
+    // Add Node.js polyfills
+    nodePolyfills({
+      // To add only specific polyfills, add them here. If no option is passed, adds all polyfills
+      include: [
+        'path',
+        'stream',
+        'util',
+        'buffer',
+        'crypto',
+        'process',
+        'os',
+        'url',
+        'assert',
+        'events',
+        'querystring',
+        'stream',
+        'timers',
+        'tty'
+      ],
+      globals: {
+        process: true,
+        Buffer: true,
+        global: true,
+      },
+      // Whether to polyfill `node:` protocol imports.
+      protocolImports: true,
+      // Fix for Vite 4+
+      exclude: []
+    }),
+    
+    // Bundle size visualization is temporarily disabled
+    
+    // Ensure proper TypeScript handling
+    {
+      name: 'typescript-imports',
+      resolveId(source: string) {
+        if (source.endsWith('.tsx') || source.endsWith('.ts')) {
+          return { id: source, external: false };
+        }
+        return null;
+      },
+    },
+    
+    // No need for commonjs plugin with SWC
+    
+    // React SWC plugin with JSX runtime
+    react({
+      jsxImportSource: '@emotion/react',
+      // Use SWC for faster builds and better module handling
+      tsDecorators: true,
+      // Disable TypeScript checking for development
+      ...(mode === 'development' && { typescript: false }),
+      // Configure SWC options
+      plugins: [
+        // Add any SWC plugins if needed
+      ],
+    }),
+    // Temporarily disabled lovable-tagger
+    // mode === 'development' && componentTagger(),
+    svgr({
+      esbuildOptions: {
+        // Enable esbuild polyfill for Node.js globals and built-ins
+        define: {
+          global: 'globalThis',
+        },
+      },
+    })
+  ].filter(Boolean),
+  
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Add aliases for commonjs modules
+      '@babel/runtime/helpers/interopRequireDefault': '@babel/runtime/helpers/esm/interopRequireDefault',
+      '@babel/runtime/helpers/typeof': '@babel/runtime/helpers/esm/typeof',
+    },
+    extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
+    // Ensure proper module resolution
+    mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
+  },
+  define: {
+    'process.env': {},
+    'process.versions.node': JSON.stringify(process.versions.node || '18.0.0'),
+    global: 'globalThis',
+    'globalThis.process.env.NODE_ENV': JSON.stringify(mode),
+  },
+  ssr: {
+    // Force ESM for SSR
+    format: 'esm',
+    // No external deps in SSR
+    noExternal: true,
+  },
+  
+  // Cache configuration - force clean build
+  cacheDir: 'node_modules/.vite-clean',
+  
+  
+  preview: {
+    port: 8080,
+    strictPort: true,
+  },
+}));

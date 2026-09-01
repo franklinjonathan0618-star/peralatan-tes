@@ -1,0 +1,248 @@
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+
+    --primary: 220.9 39.3% 11%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 210 20% 98%;
+    --primary-foreground: 220.9 39.3% 11%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-md rounded-lg;
+  }
+  
+  .nav-item {
+    @apply relative px-4 py-2 rounded-md transition-all duration-300 hover:bg-primary/10;
+  }
+  
+  .nav-item.active {
+    @apply bg-primary/10 text-primary font-medium;
+  }
+  
+  .nav-item.active::after {
+    content: '';
+    @apply absolute bottom-0 left-0 h-[3px] w-full bg-primary rounded-t-md;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white rounded-lg px-4 py-2 transition-all hover:brightness-110 active:brightness-90;
+  }
+  
+  .form-input {
+    @apply w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  
+  .table-container {
+    @apply w-full overflow-x-auto rounded-lg border;
+  }
+  
+  .data-table {
+    @apply w-full caption-bottom text-sm;
+  }
+  
+  .data-table thead tr {
+    @apply border-b bg-muted/50;
+  }
+  
+  .data-table th {
+    @apply h-12 px-4 text-left align-middle font-medium text-muted-foreground;
+  }
+  
+  .data-table tbody tr {
+    @apply border-b transition-colors hover:bg-muted/30;
+  }
+  
+  .data-table td {
+    @apply p-4 align-middle;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 animate-fade-in;
+  }
+  
+  .page-header {
+    @apply mb-8;
+  }
+  
+  .page-title {
+    @apply text-3xl font-bold tracking-tight text-foreground mb-2;
+  }
+  
+  .page-description {
+    @apply text-lg text-muted-foreground;
+  }
+  
+  .card-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+  
+  .stat-card {
+    @apply glass-card p-6 flex flex-col space-y-2 animate-scale-in;
+  }
+  
+  .stat-value {
+    @apply text-3xl font-bold;
+  }
+  
+  .stat-label {
+    @apply text-sm text-muted-foreground;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    font-size: 12pt;
+    background: white !important;
+  }
+  
+  .page-break {
+    page-break-after: always;
+  }
+  
+  .print-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .print-header h1 {
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .print-header h2 {
+    font-size: 14pt;
+    margin-bottom: 10px;
+  }
+  
+  .print-header p {
+    font-size: 11pt;
+  }
+  
+  table.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .print-table th, .print-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .print-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  
+  .print-footer {
+    margin-top: 30px;
+    font-size: 10pt;
+    text-align: center;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+/* Custom styling untuk scrollbar cermin di atas tabel */
+.top-mirror-scrollbar::-webkit-scrollbar {
+  height: 12px;
+}
+.top-mirror-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.top-mirror-scrollbar::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+  border: 2px solid #f1f5f9;
+}
+.top-mirror-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
