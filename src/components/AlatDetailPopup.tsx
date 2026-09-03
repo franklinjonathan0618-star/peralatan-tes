@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import {
   Clock, Fuel, Wrench, ClipboardList, X, TrendingUp, AlertCircle, Loader2, Printer, FileSpreadsheet,
-  ShieldCheck, FileText, Plus, Trash2, Edit3, ExternalLink, UploadCloud, Calendar, ChevronLeft, ChevronRight
+  ShieldCheck, FileText, Plus, Trash2, Edit3, ExternalLink, UploadCloud, Calendar, ChevronLeft, ChevronRight,
+  Boxes
 } from 'lucide-react';
 import { useTimeSheet } from '@/hooks/useTimeSheet';
 import { usePerbaikan } from '@/hooks/usePerbaikan';
 import { useSilo, useCreateSilo, useUpdateSilo, useDeleteSilo, uploadSiloPdf, SiloDokumen } from '@/hooks/useSilo';
+import { usePemutihan } from '@/hooks/usePemutihan';
 import { format } from 'date-fns';
 import { exportMultipleSheetsToExcel } from '@/utils/excelUtils';
 import { toast } from 'sonner';
@@ -22,7 +24,7 @@ interface AlatDetailPopupProps {
   onClose: () => void;
 }
 
-type TabId = 'jam' | 'bbm' | 'sparepart' | 'perbaikan' | 'silo';
+type TabId = 'jam' | 'bbm' | 'sparepart' | 'perbaikan' | 'kanibal' | 'silo';
 
 const formatCurrency = (val: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
@@ -89,6 +91,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
   const { data: timesheetAll = [], isLoading: tsLoading } = useTimeSheet();
   const { data: perbaikanAll = [], isLoading: pbLoading } = usePerbaikan();
   const { data: siloList = [], isLoading: siloLoading } = useSilo(noLambung);
+  const { data: pemutihanAll = [], isLoading: pemutihanLoading } = usePemutihan();
 
   const createSilo = useCreateSilo();
   const updateSilo = useUpdateSilo();
@@ -168,6 +171,27 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
             <div class="stat-card"><div class="stat-value">${jamStats.totalEntries}</div><div class="stat-label">Total Entri Timesheet</div></div>
           </div>
         </div>
+
+        <!-- DATA KANIBAL / PEMUTIHAN -->
+        <div class="section">
+          <div class="section-title"><span class="icon">📦</span> Data Kanibal / Pemutihan Alat</div>
+          ${kanibalData.length === 0 ? '<p style="padding:12px;color:#94a3b8;text-align:center">Belum ada data kanibal / pemutihan</p>' : `
+          <table>
+            <thead><tr>
+              <th>Tanggal</th><th>Merk / Tipe</th><th>Part Terlepas</th><th>Status Alat</th><th>Persetujuan</th><th>Keterangan</th>
+            </tr></thead>
+            <tbody>
+              ${kanibalData.map(k => `<tr>
+                <td>${k.tanggal ? formatDate(k.tanggal) : '-'}</td>
+                <td>${k.merk || '-'} ${k.tipe ? '/ ' + k.tipe : ''}</td>
+                <td style="font-weight:600;color:#c2410c">${k.part_terlepas || '-'}</td>
+                <td><span class="badge ${k.status === 'kanibal' ? 'badge-orange' : 'badge-gray'}">${k.status || '-'}</span></td>
+                <td><span class="badge ${k.status_pemutihan === 'approved' ? 'badge-green' : k.status_pemutihan === 'rejected' ? 'badge-red' : 'badge-yellow'}">${k.status_pemutihan === 'approved' ? 'Disetujui' : k.status_pemutihan === 'rejected' ? 'Ditolak' : 'Menunggu'}</span></td>
+                <td>${k.keterangan || '-'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`}
+        </div>
       </body>
       </html>
     `;
@@ -208,9 +232,23 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
         'Jam Kerja': ts.totalJam || 0
       }));
 
+    const kanibalSheet = kanibalData.map((k, idx) => ({
+      'No': idx + 1,
+      'Tanggal': k.tanggal ? formatDate(k.tanggal) : '-',
+      'No Lambung': k.no_lambung || '-',
+      'Nama Alat': k.nama_alat || '-',
+      'Merk': k.merk || '-',
+      'Tipe': k.tipe || '-',
+      'Part Terlepas': k.part_terlepas || '-',
+      'Status': k.status || '-',
+      'Status Pemutihan': k.status_pemutihan || 'pending',
+      'Keterangan': k.keterangan || '-'
+    }));
+
     const sheets = [
       { data: siloDataSheet, name: 'Dokumen SILO' },
       { data: jamData, name: 'Jam Pemakaian' },
+      { data: kanibalSheet, name: 'Kanibal' },
     ];
 
     try {
@@ -240,6 +278,16 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
       return pb.namaAlat.toLowerCase() === namaAlat.toLowerCase();
     });
   }, [perbaikanAll, noLambung, namaAlat]);
+
+  // Filter kanibal / pemutihan data
+  const kanibalData = useMemo(() => {
+    return pemutihanAll.filter(item => {
+      if (noLambung && item.no_lambung) {
+        return item.no_lambung.trim().toLowerCase() === noLambung.trim().toLowerCase();
+      }
+      return item.nama_alat && item.nama_alat.trim().toLowerCase() === namaAlat.trim().toLowerCase();
+    }).sort((a, b) => (b.tanggal || '') > (a.tanggal || '') ? 1 : -1);
+  }, [pemutihanAll, noLambung, namaAlat]);
 
   // === TAB STATS ===
   const jamStats = useMemo(() => {
@@ -383,7 +431,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
     }
   };
 
-  const isLoading = tsLoading || pbLoading || siloLoading;
+  const isLoading = tsLoading || pbLoading || siloLoading || pemutihanLoading;
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode; count?: number | string }[] = [
     { id: 'silo', label: 'Dokumen SILO', icon: <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />, count: siloList.length },
@@ -391,6 +439,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
     { id: 'bbm', label: 'BBM & Oli', icon: <Fuel className="h-3.5 w-3.5" />, count: `${bbmStats.bbm} L` },
     { id: 'sparepart', label: 'Sparepart', icon: <Wrench className="h-3.5 w-3.5" />, count: sparepartStats.items.length },
     { id: 'perbaikan', label: 'Riwayat Perbaikan', icon: <ClipboardList className="h-3.5 w-3.5" />, count: riwayatPerbaikan.length },
+    { id: 'kanibal', label: 'Kanibal', icon: <Boxes className="h-3.5 w-3.5 text-amber-600" />, count: kanibalData.length },
   ];
 
   return (
@@ -785,6 +834,110 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                           );
                         })}
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 5: KANIBAL (DATA PEMUTIHAN) */}
+                {activeTab === 'kanibal' && (
+                  <div className="p-4">
+                    {kanibalData.length === 0 ? (
+                      <EmptyState message="Belum ada data kanibal atau pemutihan untuk alat ini" />
+                    ) : (
+                      <>
+                        <div className="mb-3 flex items-center justify-between">
+                          <span className="text-xs text-slate-500">{kanibalData.length} data kanibal/pemutihan</span>
+                          <span className="text-xs text-slate-400">
+                            Sumber: Data Pemutihan Alat
+                          </span>
+                        </div>
+                        <MouseSliderWrapper minWidth="650px" className="rounded-lg border border-slate-200">
+                          <table className="w-full text-xs min-w-[650px]">
+                            <thead>
+                              <tr className="bg-slate-50 border-b border-slate-200">
+                                <th className="text-left px-3 py-2 font-semibold text-slate-600">Tanggal</th>
+                                <th className="text-left px-3 py-2 font-semibold text-slate-600">Merk / Tipe</th>
+                                <th className="text-left px-3 py-2 font-semibold text-slate-600">Part Terlepas</th>
+                                <th className="text-left px-3 py-2 font-semibold text-slate-600">Status Alat</th>
+                                <th className="text-left px-3 py-2 font-semibold text-slate-600">Persetujuan</th>
+                                <th className="text-left px-3 py-2 font-semibold text-slate-600">Keterangan</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {kanibalData.map((item, i) => {
+                                const parts = (item.part_terlepas || '')
+                                  .split(',')
+                                  .map(p => p.trim())
+                                  .filter(Boolean);
+
+                                return (
+                                  <tr key={item.id || i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                                    <td className="px-3 py-2 text-slate-700 font-medium whitespace-nowrap">
+                                      {item.tanggal ? formatDate(item.tanggal) : '-'}
+                                    </td>
+                                    <td className="px-3 py-2 text-slate-600">
+                                      {item.merk || '-'} {item.tipe ? `/ ${item.tipe}` : ''}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      {parts.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                          {parts.map((p, pIdx) => (
+                                            <span
+                                              key={pIdx}
+                                              className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200"
+                                            >
+                                              {p}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span className="text-slate-400 italic">-</span>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 whitespace-nowrap">
+                                      {item.status === 'kanibal' ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-300">
+                                          Kanibal
+                                        </span>
+                                      ) : item.status === 'pemutihan' ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300">
+                                          Pemutihan
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300">
+                                          {item.status || 'Terjual'}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 whitespace-nowrap">
+                                      {item.status_pemutihan === 'approved' ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                          Disetujui
+                                        </span>
+                                      ) : item.status_pemutihan === 'rejected' ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300">
+                                          Ditolak
+                                        </span>
+                                      ) : item.status_pemutihan === 'completed' ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
+                                          Selesai
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                                          Menunggu
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 text-slate-600 max-w-[200px] truncate" title={item.keterangan}>
+                                      {item.keterangan || '-'}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </MouseSliderWrapper>
+                      </>
                     )}
                   </div>
                 )}
