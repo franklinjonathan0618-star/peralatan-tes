@@ -22,13 +22,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { AlatBerat } from '@/types';
 import { MultiFotoUploader } from '@/components/ui/MultiFotoUploader';
 import { serializeFotoList } from '@/utils/fotoUtils';
-import { HelpCircle } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { FisikAlatHelpTooltip } from '@/components/FisikAlatHelpTooltip';
 
 interface AddAlatBeratDialogProps {
   onSubmit: (data: Omit<AlatBerat, 'id'>) => Promise<void> | void;
@@ -238,26 +232,9 @@ export function AddAlatBeratDialog({ onSubmit, className }: AddAlatBeratDialogPr
                 </Select>
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <Label htmlFor="fisik_alat">Fisik Alat (%)</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle className="h-4 w-4 text-slate-400 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm">
-                        <div className="space-y-2">
-                          <p className="font-semibold">Kategori Penilaian Umum:</p>
-                          <ul className="list-disc list-inside space-y-1 text-xs">
-                            <li><span className="font-medium">80% – 100%:</span> Kondisi sangat baik / prima (masih layak operasional tinggi)</li>
-                            <li><span className="font-medium">50% – 79%:</span> Kondisi baik / butuh perawatan ringan (minor repair)</li>
-                            <li><span className="font-medium">20% – 49%:</span> Kondisi rusak / butuh perbaikan besar atau penggantian suku cadang utama (Overhaul)</li>
-                            <li><span className="font-medium">0% – 19%:</span> Kondisi habis / rusak total (Breakdown / Scrap), biaya perbaikan lebih mahal daripada beli baru</li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <FisikAlatHelpTooltip iconClassName="h-4 w-4" />
                 </div>
                 <Input
                   id="fisik_alat"

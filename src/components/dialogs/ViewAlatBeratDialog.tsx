@@ -8,17 +8,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Eye, HelpCircle } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { AlatBerat } from "@/types";
 import { formatDateDisplay } from "@/utils/dateUtils";
 import FotoViewerModal from "@/components/FotoViewerModal";
 import { parseFotoList, SLOT_LABELS } from "@/utils/fotoUtils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { FisikAlatHelpTooltip } from "@/components/FisikAlatHelpTooltip";
 
 interface ViewAlatBeratDialogProps {
   alatBerat: AlatBerat;
@@ -106,24 +101,7 @@ export function ViewAlatBeratDialog({ alatBerat }: ViewAlatBeratDialogProps) {
                   <label className="text-sm font-medium text-gray-500">
                     Fisik Alat (%)
                   </label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle className="h-3 w-3 text-slate-400 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm">
-                        <div className="space-y-2">
-                          <p className="font-semibold">Kategori Penilaian Umum:</p>
-                          <ul className="list-disc list-inside space-y-1 text-xs">
-                            <li><span className="font-medium">80% – 100%:</span> Kondisi sangat baik / prima (masih layak operasional tinggi)</li>
-                            <li><span className="font-medium">50% – 79%:</span> Kondisi baik / butuh perawatan ringan (minor repair)</li>
-                            <li><span className="font-medium">20% – 49%:</span> Kondisi rusak / butuh perbaikan besar atau penggantian suku cadang utama (Overhaul)</li>
-                            <li><span className="font-medium">0% – 19%:</span> Kondisi habis / rusak total (Breakdown / Scrap), biaya perbaikan lebih mahal daripada beli baru</li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <FisikAlatHelpTooltip iconClassName="h-3.5 w-3.5" />
                 </div>
                 <p className="text-sm">{alatBerat.fisik_alat !== undefined ? `${alatBerat.fisik_alat}%` : "-"}</p>
               </div>

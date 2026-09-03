@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Trash, FileDown, CheckCircle2, Activity, AlertTriangle, Printer, Edit, Upload, HelpCircle } from 'lucide-react';
+import { Search, Trash, FileDown, CheckCircle2, Activity, AlertTriangle, Printer, Edit, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { exportToExcel, importFromExcel, validateImportedData } from '@/lib/excelUtils';
 import { useAlatBerat, useAddAlatBerat, useUpdateAlatBerat, useDeleteAlatBerat } from '@/hooks/useAlatBerat';
@@ -19,12 +19,7 @@ import AlatDetailPopup from '@/components/AlatDetailPopup';
 import { TableScrollWrapper } from '@/components/ui/TableScrollWrapper';
 import FotoViewerModal from '@/components/FotoViewerModal';
 import { parseFotoList } from '@/utils/fotoUtils';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { FisikAlatHelpTooltip } from '@/components/FisikAlatHelpTooltip';
 
 // Import the AlatBerat type from shared types
 import type { AlatBerat } from '@/types';
@@ -987,26 +982,9 @@ const DataAlatBerat = () => {
                   <TableHead>Lokasi Sebelumnya</TableHead>
                   <TableHead>Kondisi</TableHead>
                   <TableHead>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 whitespace-nowrap">
                       Fisik Alat (%)
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-3 w-3 text-slate-400 cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <div className="space-y-2">
-                              <p className="font-semibold">Kategori Penilaian Umum:</p>
-                              <ul className="list-disc list-inside space-y-1 text-xs">
-                                <li><span className="font-medium">80% – 100%:</span> Kondisi sangat baik / prima (masih layak operasional tinggi)</li>
-                                <li><span className="font-medium">50% – 79%:</span> Kondisi baik / butuh perawatan ringan (minor repair)</li>
-                                <li><span className="font-medium">20% – 49%:</span> Kondisi rusak / butuh perbaikan besar atau penggantian suku cadang utama (Overhaul)</li>
-                                <li><span className="font-medium">0% – 19%:</span> Kondisi habis / rusak total (Breakdown / Scrap), biaya perbaikan lebih mahal daripada beli baru</li>
-                              </ul>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <FisikAlatHelpTooltip iconClassName="h-3.5 w-3.5" />
                     </div>
                   </TableHead>
                   <TableHead>Status</TableHead>

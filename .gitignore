@@ -32,3 +32,5 @@ migrate-data.ts
 *.njsproj
 *.sln
 *.sw?
+*.zip
+
