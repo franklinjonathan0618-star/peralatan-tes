@@ -16,7 +16,7 @@ const resend = isConfigured ? new Resend(process.env.RESEND_API_KEY) : null;
 
 /**
  * Mengirim email notifikasi persetujuan baru ke daftar penerima
- * @param {string} type - Tipe permohonan ('PPA' | 'RPA')
+ * @param {string} type - Tipe permohonan ('PPA' | 'RPA' | 'PEMUTIHAN')
  * @param {object} data - Detail data permohonan
  * @param {string[]} recipients - Daftar email penerima
  */
@@ -38,11 +38,24 @@ async function sendApprovalNotification(type, data, recipients) {
     cleanData[key] = val || "-";
   }
 
-  const isPPA = type === "PPA";
-  const title = isPPA
-    ? "Permohonan Perbaikan Alat (PPA) Baru"
-    : "Rencana Penggunaan Alat (RPA) Baru";
-  const subject = `[Permohonan Baru] ${type} - ${cleanData.nama_alat || cleanData.item_pekerjaan} (${isPPA ? cleanData.no_ppa : cleanData.rpa_id})`;
+  const normType = (type || "").toUpperCase();
+  const isPPA = normType === "PPA";
+  const isRPA = normType === "RPA";
+  const isPemutihan = normType === "PEMUTIHAN" || normType === "PEMUTIHAN_ALAT";
+
+  let title = "Permohonan Baru";
+  let subject = `[Permohonan Baru] ${type} - ${cleanData.nama_alat || cleanData.item_pekerjaan || cleanData.no_lambung}`;
+
+  if (isPPA) {
+    title = "Permohonan Perbaikan Alat (PPA) Baru";
+    subject = `[Permohonan Baru] PPA - ${cleanData.nama_alat} (${cleanData.no_ppa})`;
+  } else if (isRPA) {
+    title = "Rencana Penggunaan Alat (RPA) Baru";
+    subject = `[Permohonan Baru] RPA - ${cleanData.item_pekerjaan || cleanData.nama_alat} (${cleanData.rpa_id})`;
+  } else if (isPemutihan) {
+    title = "Permohonan Pemutihan Alat Baru";
+    subject = `[Permohonan Baru] Pemutihan Alat - ${cleanData.nama_alat} (${cleanData.no_lambung})`;
+  }
 
   let detailRowsHTML = "";
   if (isPPA) {
@@ -54,12 +67,22 @@ async function sendApprovalNotification(type, data, recipients) {
       <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Kerusakan</td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #d9534f; font-weight: 500;">${cleanData.kerusakan}</td></tr>
       <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Keterangan</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.keterangan}</td></tr>
     `;
-  } else {
+  } else if (isRPA) {
     detailRowsHTML = `
       <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee; width: 150px;">No. RPA</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.rpa_id}</td></tr>
       <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Tanggal</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.tanggal}</td></tr>
       <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Item Pekerjaan</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.item_pekerjaan}</td></tr>
       <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Lokasi Proyek</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.lokasi_proyek}</td></tr>
+    `;
+  } else if (isPemutihan) {
+    detailRowsHTML = `
+      <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee; width: 150px;">Tanggal</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.tanggal}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">No. Lambung</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.no_lambung}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Nama Alat</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.nama_alat}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Merk / Tipe</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.merk || "-"} / ${cleanData.tipe || "-"}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Part Terlepas</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.part_terlepas || "-"}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Usulan Status</td><td style="padding: 8px; border-bottom: 1px solid #eee; text-transform: capitalize;">${cleanData.status || "-"}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Keterangan</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${cleanData.keterangan || "-"}</td></tr>
     `;
   }
 

@@ -26,6 +26,8 @@ export const ALL_PAGES: { key: string; label: string }[] = [
   { key: 'sewaAlatEksternal', label: 'Sewa Alat' },
   { key: 'rpa', label: 'RPA' },
   { key: 'riwayatPenggunaanAlat', label: 'Riwayat Penggunaan Alat' },
+  { key: 'pemutihanAlat', label: 'Persetujuan Pemutihan' },
+  { key: 'pemutihan', label: 'Data Pemutihan' },
   { key: 'kegiatanMekanik', label: 'Kegiatan Mekanik' },
   { key: 'stockSparepart', label: 'Stock Sparepart' },
   { key: 'ppa', label: 'PPA' },
@@ -65,6 +67,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     sewaAlatEksternal: { view: true, create: true, edit: true, delete: true },
     rpa: { view: true, create: true, edit: true, delete: true },
     riwayatPenggunaanAlat: { view: true, create: true, edit: true, delete: true },
+    pemutihanAlat: { view: true, create: true, edit: true, delete: true },
+    pemutihan: { view: true, create: true, edit: true, delete: true },
 
     // Laporan Perbaikan
     formPerbaikan: { view: true, create: true, edit: true, delete: true },
@@ -92,6 +96,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     sewaAlatEksternal: { view: true, create: false, edit: false, delete: false },
     rpa: { view: true, create: false, edit: false, delete: false },
     riwayatPenggunaanAlat: { view: true, create: false, edit: false, delete: false },
+    pemutihanAlat: { view: true, create: true, edit: true, delete: false },
+    pemutihan: { view: true, create: false, edit: false, delete: false },
 
     // Laporan Perbaikan - Bisa create dan edit
     formPerbaikan: { view: true, create: true, edit: true, delete: false },
@@ -117,6 +123,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     sewaAlatEksternal: { view: true, create: false, edit: false, delete: false },
     rpa: { view: true, create: false, edit: false, delete: false },
     riwayatPenggunaanAlat: { view: true, create: false, edit: false, delete: false },
+    pemutihanAlat: { view: true, create: false, edit: false, delete: false },
+    pemutihan: { view: true, create: false, edit: false, delete: false },
     formPerbaikan: { view: true, create: false, edit: false, delete: false },
     stockSparepart: { view: true, create: false, edit: false, delete: false },
     ppa: { view: true, create: false, edit: false, delete: false },

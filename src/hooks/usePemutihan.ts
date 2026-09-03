@@ -8,6 +8,8 @@ import { withTimeout } from '@/utils/withTimeout';
 import { DEMO_MODE } from '@/contexts/AuthContext';
 import { useActiveProject } from './useActiveProject';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+
 interface UsePemutihanReturn {
   data: Pemutihan[] | [];
   isLoading: boolean;
@@ -223,12 +225,28 @@ export const useAddPemutihan = () => {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (insertedData) => {
       queryClient.invalidateQueries({ queryKey: ['pemutihan'] });
       toast({
         title: 'Sukses',
         description: 'Data pemutihan berhasil ditambahkan',
       });
+      if (insertedData) {
+        let cleanApiUrl = API_URL;
+        if (cleanApiUrl.endsWith('/')) {
+          cleanApiUrl = cleanApiUrl.slice(0, -1);
+        }
+        fetch(`${cleanApiUrl}/api/send-notification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'PEMUTIHAN',
+            data: insertedData,
+          }),
+        }).catch((err) =>
+          console.error('Failed to send Pemutihan email:', err)
+        );
+      }
     },
     onError: (error: Error) => {
       toast({

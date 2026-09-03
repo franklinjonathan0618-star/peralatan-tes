@@ -230,7 +230,17 @@ app.post("/api/send-notification", async (req, res) => {
       return res.status(400).json({ error: "type and data are required" });
     }
 
-    const pageName = type.toLowerCase(); // 'ppa' or 'rpa'
+    let pageNames = [];
+    const normType = type.toUpperCase();
+    if (normType === "PPA") {
+      pageNames = ["ppa"];
+    } else if (normType === "RPA") {
+      pageNames = ["rpa"];
+    } else if (normType === "PEMUTIHAN" || normType === "PEMUTIHAN_ALAT") {
+      pageNames = ["pemutihanAlat", "pemutihan", "pemutihanalat"];
+    } else {
+      pageNames = [type.toLowerCase()];
+    }
 
     // Query: email semua user aktif yang punya can_approve=1 di halaman ini,
     // ATAU semua user admin aktif (admin selalu bisa approve)
@@ -239,7 +249,7 @@ app.post("/api/send-notification", async (req, res) => {
       SELECT DISTINCT p.email
       FROM \`profiles\` p
       LEFT JOIN \`user_permissions\` up ON up.user_id = p.id
-      LEFT JOIN \`permissions\` perm ON perm.id = up.permission_id AND perm.page_name = ?
+      LEFT JOIN \`permissions\` perm ON perm.id = up.permission_id AND perm.page_name IN (?)
       WHERE p.is_active = 1
         AND p.email IS NOT NULL
         AND p.email != ''
@@ -249,7 +259,7 @@ app.post("/api/send-notification", async (req, res) => {
         )
     `;
 
-    const [users] = await db.query(query, [pageName]);
+    const [users] = await db.query(query, [pageNames]);
     const recipients = users
       .map((u) => u.email)
       .filter((email) => email && email.includes("@"));
@@ -675,6 +685,8 @@ const ALL_PAGES = [
   { key: "sewaAlatEksternal", name: "Sewa Alat" },
   { key: "rpa", name: "RPA" },
   { key: "riwayatPenggunaanAlat", name: "Riwayat Penggunaan Alat" },
+  { key: "pemutihanAlat", name: "Persetujuan Pemutihan" },
+  { key: "pemutihan", name: "Data Pemutihan" },
   { key: "kegiatanMekanik", name: "Kegiatan Mekanik" },
   { key: "stockSparepart", name: "Stock Sparepart" },
   { key: "ppa", name: "PPA" },
