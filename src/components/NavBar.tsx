@@ -35,9 +35,9 @@ const menuItems: MenuItem[] = [
   {
     title: 'Laporan Perbaikan',
     items: [
+      { title: 'PPA', path: '/ppa' },
       { title: 'Kegiatan Mekanik', path: '/laporan/kegiatan-mekanik' },
       { title: 'Form Perbaikan', path: '/form-perbaikan' },
-      { title: 'PPA', path: '/ppa' },
     ]
   },
   {
