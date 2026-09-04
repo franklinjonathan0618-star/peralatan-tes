@@ -69,12 +69,12 @@ export const useKegiatanMekanik = (date?: Date) => {
   useEffect(() => {
     const subscription = supabase
       .channel('kegiatan_mekanik_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
           table: 'kegiatan_mekanik'
-        }, 
+        },
         () => {
           queryClient.invalidateQueries({ queryKey: ['kegiatan_mekanik', date?.toISOString()] });
         }
@@ -94,7 +94,7 @@ export const useKegiatanMekanik = (date?: Date) => {
 
 export const useAddKegiatanMekanik = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: Omit<KegiatanMekanik, 'id' | 'created_at' | 'updated_at'>) => {
       try {
@@ -102,12 +102,21 @@ export const useAddKegiatanMekanik = () => {
           throw new Error('Tanggal, Nama Mekanik, dan Lokasi Pekerjaan harus diisi');
         }
 
+        // no_ppa dan nama_alat adalah kolom NOT NULL di database, tapi boleh
+        // "kosong secara makna" (tidak ada PPA dipilih). Normalisasi null/undefined
+        // ke string kosong agar tidak melanggar constraint DB.
+        const payload = {
+          ...data,
+          no_ppa: data.no_ppa || '',
+          nama_alat: data.nama_alat || '',
+        };
+
         const { data: result, error } = await supabase
           .from('kegiatan_mekanik')
-          .insert(data)
+          .insert(payload)
           .select()
           .single();
-        
+
         if (error) {
           console.error('Kegiatan Mekanik Insert Error:', error.code, error.message, error.details);
           throw new Error(error.message || 'Gagal menyimpan kegiatan mekanik');
@@ -126,7 +135,7 @@ export const useAddKegiatanMekanik = () => {
 
 export const useUpdateKegiatanMekanik = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: KegiatanMekanik) => {
       try {
@@ -134,17 +143,19 @@ export const useUpdateKegiatanMekanik = () => {
         if (!data.tanggal || !data.nama_mekanik || !data.lokasi_pekerjaan) {
           throw new Error('Tanggal, Nama Mekanik, dan Lokasi Pekerjaan harus diisi');
         }
-        
+
         const { data: result, error } = await supabase
           .from('kegiatan_mekanik')
           .update({
             ...data,
+            no_ppa: data.no_ppa || '',
+            nama_alat: data.nama_alat || '',
             updated_at: new Date().toISOString()
           })
           .eq('id', data.id)
           .select()
           .single();
-        
+
         if (error) {
           console.error('Kegiatan Mekanik Update Error:', error.code, error.message);
           throw new Error(error.message || 'Gagal mengupdate kegiatan mekanik');
@@ -163,14 +174,14 @@ export const useUpdateKegiatanMekanik = () => {
 
 export const useDeleteKegiatanMekanik = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('kegiatan_mekanik')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
       return id;
     },
@@ -179,4 +190,3 @@ export const useDeleteKegiatanMekanik = () => {
     },
   });
 };
-

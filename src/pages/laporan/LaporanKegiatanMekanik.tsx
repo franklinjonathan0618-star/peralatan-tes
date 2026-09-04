@@ -97,9 +97,9 @@ const LaporanKegiatanMekanik = () => {
     Omit<KegiatanMekanik, "id" | "created_at" | "updated_at">
   >({
     tanggal: new Date(),
-    no_ppa: null,
+    no_ppa: "",
     no_lambung: "",
-    nama_alat: null,
+    nama_alat: "",
     nama_mekanik: "",
     lokasi_pekerjaan: "",
     lokasi_sebelumnya: "",
@@ -166,9 +166,9 @@ const LaporanKegiatanMekanik = () => {
     setEditingId(null);
     setFormData({
       tanggal: new Date(),
-      no_ppa: null,
+      no_ppa: "",
       no_lambung: "",
-      nama_alat: null,
+      nama_alat: "",
       nama_mekanik: "",
       lokasi_pekerjaan: "",
       lokasi_sebelumnya: "",
@@ -200,9 +200,14 @@ const LaporanKegiatanMekanik = () => {
       const d = formData.tanggal ? new Date(formData.tanggal) : new Date();
       const tanggalLocal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
+      // no_ppa dan nama_alat adalah kolom NOT NULL di database, tapi user boleh
+      // memilih "Tidak ada PPA" di form (yang menghasilkan null/undefined).
+      // Karena itu, normalisasi ke string kosong agar tidak melanggar constraint DB.
       const dataToSubmit = {
         ...rest,
         tanggal: tanggalLocal,
+        no_ppa: rest.no_ppa || "",
+        nama_alat: rest.nama_alat || "",
       };
 
       if (editingId !== null) {
