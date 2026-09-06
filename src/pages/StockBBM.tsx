@@ -27,6 +27,13 @@ function TransactionForm({
   const [form, setForm] = useState(initial);
   const set = (k: keyof typeof form, v: any) => setForm(f => ({ ...f, [k]: v }));
 
+  // Nilai efektif (dipakai untuk hitung Total Biaya di form)
+  const effectiveJumlah = form.jenis === 'pembelian'
+    ? (form.jumlahMasuk || 0)
+    : form.jenis === 'pemakaian'
+      ? (form.jumlahKeluar || 0)
+      : (form.jumlahMasuk || 0) - (form.jumlahKeluar || 0); // sisa_stock: net
+
   return (
     <form
       onSubmit={e => { e.preventDefault(); onSave(form); }}
@@ -36,7 +43,7 @@ function TransactionForm({
         <div className="inline-flex rounded-md shadow-sm" role="group">
           <button
             type="button"
-            onClick={() => set('jenis', 'pembelian')}
+            onClick={() => setForm(f => ({ ...f, jenis: 'pembelian', jumlahKeluar: 0 }))}
             className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${form.jenis === 'pembelian'
               ? 'bg-primary text-white border-primary'
               : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
@@ -46,7 +53,7 @@ function TransactionForm({
           </button>
           <button
             type="button"
-            onClick={() => set('jenis', 'pemakaian')}
+            onClick={() => setForm(f => ({ ...f, jenis: 'pemakaian', jumlahMasuk: 0 }))}
             className={`px-4 py-2 text-sm font-medium border ${(!form.jenis || form.jenis === 'pemakaian')
               ? 'bg-primary text-white border-primary'
               : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
@@ -81,18 +88,32 @@ function TransactionForm({
         </select>
       </div>
       <div className="space-y-1">
-        <label className="text-sm font-medium">Jumlah <span className="text-red-500">*</span></label>
-        <input type="number" min="0" step="0.01" value={form.jumlah}
-          onChange={e => set('jumlah', parseFloat(e.target.value) || 0)} className="form-input" required />
+        <label className="text-sm font-medium">
+          Jumlah Masuk {form.jenis !== 'pemakaian' && <span className="text-red-500">*</span>}
+        </label>
+        <input
+          type="number" min="0" step="0.01"
+          value={form.jumlahMasuk}
+          disabled={form.jenis === 'pemakaian'}
+          onChange={e => set('jumlahMasuk', parseFloat(e.target.value) || 0)}
+          className={`form-input ${form.jenis === 'pemakaian' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+          required={form.jenis !== 'pemakaian'}
+        />
       </div>
       <div className="space-y-1">
-        <label className="text-sm font-medium">Satuan</label>
-        <select value={form.satuan} onChange={e => set('satuan', e.target.value)} className="form-input">
-          <option value="liter">Liter</option>
-          <option value="drum">Drum</option>
-          <option value="galon">Galon</option>
-        </select>
+        <label className="text-sm font-medium">
+          Jumlah Keluar {form.jenis !== 'pembelian' && <span className="text-red-500">*</span>}
+        </label>
+        <input
+          type="number" min="0" step="0.01"
+          value={form.jumlahKeluar}
+          disabled={form.jenis === 'pembelian'}
+          onChange={e => set('jumlahKeluar', parseFloat(e.target.value) || 0)}
+          className={`form-input ${form.jenis === 'pembelian' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+          required={form.jenis !== 'pembelian'}
+        />
       </div>
+      {/* Satuan disembunyikan sementara, default 'liter' tetap tersimpan */}
       {form.jenis === 'pemakaian' && (
         <>
           <div className="space-y-1">
@@ -119,7 +140,7 @@ function TransactionForm({
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium">Total Biaya (Rp)</label>
-            <input type="text" readOnly value={new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format((form.jumlah || 0) * (form.cost || 0))} className="form-input bg-gray-50 text-gray-500 cursor-not-allowed" />
+            <input type="text" readOnly value={new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format((effectiveJumlah || 0) * (form.cost || 0))} className="form-input bg-gray-50 text-gray-500 cursor-not-allowed" />
           </div>
         </>
       )}
@@ -192,7 +213,7 @@ const StockBBM = () => {
 
   const emptyTrans: Omit<BBMTransaction, 'id'> = {
     tanggal: getTodayLocalDateString(),
-    jenisBBM: selectedBBMType, jumlah: 0, satuan: 'liter',
+    jenisBBM: selectedBBMType, jumlah: 0, jumlahMasuk: 0, jumlahKeluar: 0, satuan: 'liter',
     noLambung: '', namaAlat: '', cost: 0, keterangan: '', jenis: 'pemakaian', lokasiProyek: ''
   };
   const [showTransForm, setShowTransForm] = useState(false);
@@ -234,6 +255,17 @@ const StockBBM = () => {
   // Handler Transaksi
   // ══════════════════════════════════════════════════════
   const handleTransSave = async (data: Omit<BBMTransaction, 'id'>) => {
+    // Pastikan field yang tidak relevan bernilai 0, lalu hitung "jumlah" efektif
+    // (dipakai untuk hitung biaya & sinkronisasi stok) dari jumlahMasuk/jumlahKeluar
+    const jumlahMasuk = data.jenis === 'pemakaian' ? 0 : (data.jumlahMasuk || 0);
+    const jumlahKeluar = data.jenis === 'pembelian' ? 0 : (data.jumlahKeluar || 0);
+    const jumlah = data.jenis === 'pembelian'
+      ? jumlahMasuk
+      : data.jenis === 'pemakaian'
+        ? jumlahKeluar
+        : jumlahMasuk - jumlahKeluar; // sisa_stock: net masuk - keluar
+    data = { ...data, jumlahMasuk, jumlahKeluar, jumlah };
+
     try {
       if (editingTrans) {
         await updateTransMutation.mutateAsync({ id: editingTrans.id, ...data });
@@ -497,6 +529,8 @@ const StockBBM = () => {
           tanggal: tanggalFormatted,
           jenisBBM: jenisBBM,
           jumlah: jumlah,
+          jumlahMasuk: jenis === 'pemakaian' ? 0 : jumlah,
+          jumlahKeluar: jenis === 'pemakaian' ? jumlah : 0,
           satuan: satuan,
           noLambung: jenis === 'pemakaian' ? (noLambungExcel || '') : '',
           namaAlat: jenis === 'pemakaian' ? (namaAlatExcel || '') : '',
@@ -537,8 +571,8 @@ const StockBBM = () => {
       'Tanggal': item.tanggal ? normalizeDateOnly(item.tanggal) : '-',
       'Jenis Transaksi': item.jenis === 'pembelian' ? 'Pembelian' : item.jenis === 'sisa_stock' ? 'Sisa Stock' : 'Pemakaian',
       'Jenis BBM': item.jenisBBM || '',
-      'Jumlah': item.jumlah,
-      'Satuan': item.satuan || '',
+      'Jumlah Masuk': item.jumlahMasuk || 0,
+      'Jumlah Keluar': item.jumlahKeluar || 0,
       'Harga Satuan (Rp)': item.cost || 0,
       'Total Biaya (Rp)': (item.jumlah || 0) * (item.cost || 0),
       'No. Lambung': item.noLambung || '',
@@ -627,8 +661,8 @@ const StockBBM = () => {
                     <th>Tanggal</th>
                     <th>Jenis Transaksi</th>
                     <th>Jenis BBM</th>
-                    <th>Jumlah</th>
-                    <th>Satuan</th>
+                    <th>Jumlah Masuk</th>
+                    <th>Jumlah Keluar</th>
                     <th>No. Lambung</th>
                     <th>Nama Alat</th>
                     <th>Lokasi Proyek</th>
@@ -644,8 +678,8 @@ const StockBBM = () => {
                       <td>${item.tanggal ? formatDateDisplay(item.tanggal) : '-'}</td>
                       <td>${item.jenis === 'pembelian' ? 'Pembelian' : item.jenis === 'sisa_stock' ? 'Sisa Stock' : 'Pemakaian'}</td>
                       <td>${item.jenisBBM || '-'}</td>
-                      <td class="text-right font-medium">${item.jumlah.toLocaleString('id-ID')}</td>
-                      <td>${item.satuan || '-'}</td>
+                      <td class="text-right font-medium">${item.jumlahMasuk ? item.jumlahMasuk.toLocaleString('id-ID') : '-'}</td>
+                      <td class="text-right font-medium">${item.jumlahKeluar ? item.jumlahKeluar.toLocaleString('id-ID') : '-'}</td>
                       <td>${item.noLambung || '-'}</td>
                       <td>${item.namaAlat || '-'}</td>
                       <td>${item.lokasiProyek || '-'}</td>
@@ -1007,7 +1041,7 @@ const StockBBM = () => {
             <div className="glass-card p-6 mb-6 animate-fade-in overflow-visible">
               <h2 className="text-xl font-semibold mb-4">{editingTrans ? 'Edit Transaksi BBM' : 'Tambah Transaksi BBM'}</h2>
               <TransactionForm
-                initial={editingTrans ? { tanggal: editingTrans.tanggal, jenisBBM: editingTrans.jenisBBM, jumlah: editingTrans.jumlah, satuan: editingTrans.satuan, noLambung: editingTrans.noLambung, namaAlat: editingTrans.namaAlat, cost: editingTrans.cost, keterangan: editingTrans.keterangan, jenis: editingTrans.jenis, lokasiProyek: editingTrans.lokasiProyek } : emptyTrans}
+                initial={editingTrans ? { tanggal: editingTrans.tanggal, jenisBBM: editingTrans.jenisBBM, jumlah: editingTrans.jumlah, jumlahMasuk: editingTrans.jumlahMasuk, jumlahKeluar: editingTrans.jumlahKeluar, satuan: editingTrans.satuan, noLambung: editingTrans.noLambung, namaAlat: editingTrans.namaAlat, cost: editingTrans.cost, keterangan: editingTrans.keterangan, jenis: editingTrans.jenis, lokasiProyek: editingTrans.lokasiProyek } : emptyTrans}
                 onSave={handleTransSave}
                 onCancel={() => { setShowTransForm(false); setEditingTrans(null); }}
                 isSaving={addTransMutation.isPending || updateTransMutation.isPending}
@@ -1020,7 +1054,7 @@ const StockBBM = () => {
               <TableScrollWrapper>
                 <table className="data-table">
                   <thead><tr>
-                    <th>Tanggal</th><th>Jenis</th><th>Jenis BBM</th><th>Jumlah</th><th>Satuan</th>
+                    <th>Tanggal</th><th>Jenis</th><th>Jenis BBM</th><th>Jumlah Masuk</th><th>Jumlah Keluar</th>
                     <th>No. Lambung</th><th>Nama Alat</th><th>Lokasi Proyek</th><th>Harga Satuan</th><th>Total Biaya</th><th>Keterangan</th><th>Aksi</th>
                   </tr></thead>
                   <tbody>
@@ -1038,8 +1072,8 @@ const StockBBM = () => {
                           </span>
                         </td>
                         <td>{item.jenisBBM || '-'}</td>
-                        <td>{item.jumlah.toLocaleString('id-ID')}</td>
-                        <td>{item.satuan || '-'}</td>
+                        <td>{item.jumlahMasuk ? item.jumlahMasuk.toLocaleString('id-ID') : '-'}</td>
+                        <td>{item.jumlahKeluar ? item.jumlahKeluar.toLocaleString('id-ID') : '-'}</td>
                         <td>{item.noLambung || '-'}</td>
                         <td>{item.namaAlat || '-'}</td>
                         <td>{item.lokasiProyek || '-'}</td>

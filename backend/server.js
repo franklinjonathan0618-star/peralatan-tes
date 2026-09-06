@@ -85,7 +85,7 @@ function processRow(row) {
   if (row.items && typeof row.items === "string") {
     try {
       row.items = JSON.parse(row.items);
-    } catch {}
+    } catch { }
   }
   // Convert any Buffer columns to string (useful for BLOB/LONGBLOB storing base64/strings)
   for (const key of Object.keys(row)) {

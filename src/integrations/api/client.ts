@@ -238,7 +238,7 @@ const authStub = {
   }),
   signOut: async () => ({ error: null }),
   onAuthStateChange: () => ({
-    data: { subscription: { unsubscribe: () => {} } },
+    data: { subscription: { unsubscribe: () => { } } },
   }),
   getSession: async () => ({ data: { session: null }, error: null }),
   getUser: async () => ({ data: { user: null }, error: null }),

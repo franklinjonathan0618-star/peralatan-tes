@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/api/client';
 
@@ -7,7 +6,9 @@ export interface BBMTransaction {
   id: string;
   tanggal: string;       // date → string 'yyyy-MM-dd'
   jenisBBM: string;      // jenis_bbm
-  jumlah: number;        // jumlah
+  jumlah: number;        // jumlah (nilai efektif, dipakai untuk hitung biaya & stok)
+  jumlahMasuk: number;   // jumlah_masuk
+  jumlahKeluar: number;  // jumlah_keluar
   satuan: string;        // satuan
   noLambung: string;     // no_lambung
   namaAlat: string;      // nama_alat
@@ -35,6 +36,8 @@ const fetchBBMTransactions = async (): Promise<BBMTransaction[]> => {
     tanggal: item.tanggal || '',
     jenisBBM: item.jenis_bbm || '',
     jumlah: Number(item.jumlah) || 0,
+    jumlahMasuk: Number(item.jumlah_masuk) || 0,
+    jumlahKeluar: Number(item.jumlah_keluar) || 0,
     satuan: item.satuan || '',
     noLambung: item.no_lambung || '',
     namaAlat: item.nama_alat || '',
@@ -92,7 +95,11 @@ export const useAddBBMTransaction = () => {
     mutationFn: async (data: Omit<BBMTransaction, 'id'>) => {
       if (!data.tanggal) throw new Error('Tanggal harus diisi');
       if (!data.jenisBBM) throw new Error('Jenis BBM harus diisi');
-      if (!data.jumlah || data.jumlah <= 0) throw new Error('Jumlah harus lebih dari 0');
+      if (data.jenis === 'sisa_stock') {
+        if (!data.jumlahMasuk && !data.jumlahKeluar) throw new Error('Jumlah Masuk atau Jumlah Keluar harus diisi');
+      } else if (!data.jumlah || data.jumlah <= 0) {
+        throw new Error('Jumlah harus lebih dari 0');
+      }
 
       const { error } = await supabaseAny
         .from('bbm_transactions')
@@ -100,6 +107,8 @@ export const useAddBBMTransaction = () => {
           tanggal: data.tanggal,
           jenis_bbm: data.jenisBBM,
           jumlah: data.jumlah,
+          jumlah_masuk: data.jumlahMasuk || 0,
+          jumlah_keluar: data.jumlahKeluar || 0,
           satuan: data.satuan || null,
           no_lambung: data.noLambung || '',
           nama_alat: data.namaAlat || '',
@@ -156,6 +165,8 @@ export const useUpdateBBMTransaction = () => {
           tanggal: data.tanggal,
           jenis_bbm: data.jenisBBM,
           jumlah: data.jumlah,
+          jumlah_masuk: data.jumlahMasuk || 0,
+          jumlah_keluar: data.jumlahKeluar || 0,
           satuan: data.satuan || null,
           no_lambung: data.noLambung || '',
           nama_alat: data.namaAlat || '',
@@ -232,4 +243,3 @@ export const useDeleteBBMTransaction = () => {
     },
   });
 };
-
