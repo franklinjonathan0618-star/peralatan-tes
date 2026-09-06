@@ -57,13 +57,33 @@ export const useBBMTransactions = () => {
   });
 };
 
+// ── Helper: ambil project aktif (sama seperti di useBBMStocks.ts) ──────────
+const getActiveProjectId = () => {
+  const savedProject = localStorage.getItem('activeProject');
+  if (savedProject) {
+    try {
+      const project = JSON.parse(savedProject);
+      return project.id;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 // ── Helper: update jumlah_stock berdasarkan jenis & delta ──────────────────
 async function adjustStock(jenisBBM: string, delta: number) {
-  const { data: stockRows } = await supabaseAny
+  const projectId = getActiveProjectId();
+
+  let query = supabaseAny
     .from('bbm_stocks')
     .select('id, jumlah_stock')
-    .eq('jenis_bbm', jenisBBM)
-    .limit(1);
+    .eq('jenis_bbm', jenisBBM);
+
+  // Scope ke project aktif, supaya konsisten dengan filter di useBBMStocks.ts
+  query = projectId ? query.eq('project_id', projectId) : query.is('project_id', null);
+
+  const { data: stockRows } = await query.limit(1);
 
   if (!stockRows || stockRows.length === 0) {
     const newQty = Math.max(0, delta);
@@ -74,7 +94,8 @@ async function adjustStock(jenisBBM: string, delta: number) {
         jumlah_stock: newQty,
         satuan: 'liter',
         harga_satuan: 0,
-        keterangan: 'Auto-initialized from transaction'
+        keterangan: 'Auto-initialized from transaction',
+        project_id: projectId || null,
       });
     return;
   }
