@@ -355,18 +355,28 @@ const StockBBM = () => {
       'HSD (BBM Alat Berat)': 0
     };
 
-    // Add initial stock from Master Stock
-    stockList.forEach((s: BBMStockItem) => {
-      let bbm = s.jenisBBM;
+    // Total Stock = Total Pembelian + Total Sisa Stock - Total Pemakaian,
+    // dihitung langsung & real-time dari data transaksi (bukan dari tabel
+    // bbm_stocks yang terpisah, supaya tidak pernah "ketinggalan" sinkron).
+    transList.forEach((t: BBMTransaction) => {
+      let bbm = t.jenisBBM;
       if (bbm === 'Bensin') return;
       if (bbm === 'Solar') bbm = 'Dexlite';
-      if (bbm) {
-        if (stocks[bbm] === undefined) stocks[bbm] = 0;
-        stocks[bbm] += (s.jumlahStock || 0);
+      if (!bbm) return;
+      if (stocks[bbm] === undefined) stocks[bbm] = 0;
+
+      if (t.jenis === 'pembelian' || t.jenis === 'sisa_stock') {
+        stocks[bbm] += (t.jumlah || 0);
+      } else if (t.jenis === 'pemakaian') {
+        stocks[bbm] -= (t.jumlah || 0);
       }
     });
+
+    // Stok tidak boleh negatif secara tampilan
+    Object.keys(stocks).forEach(k => { stocks[k] = Math.max(0, stocks[k]); });
+
     return stocks;
-  }, [stockList]);
+  }, [transList]);
 
   useMemo(() => {
     let tPembelian = 0;
