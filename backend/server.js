@@ -730,6 +730,7 @@ async function getPermissionIdMap() {
 
 // ── System: Bulk upsert user_permissions ───────────────────
 app.post("/api/system/save-permissions", async (req, res) => {
+  console.log("[MARKER] save-permissions FIX-V2 kode terbaru aktif -", new Date().toISOString());
   try {
     const { user_id, permissions } = req.body;
     if (!user_id || !permissions)
