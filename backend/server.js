@@ -786,6 +786,10 @@ app.post("/api/system/save-permissions", async (req, res) => {
     res.json({ data: { success: true }, error: null });
   } catch (err) {
     console.error("save-permissions error:", err.message);
+    console.error("[DEBUG] err.sql:", err.sql);
+    console.error("[DEBUG] err.sqlMessage:", err.sqlMessage);
+    console.error("[DEBUG] err.code:", err.code, "| err.errno:", err.errno);
+    console.error("[DEBUG] full stack:", err.stack);
     res.status(500).json({ data: null, error: { message: err.message } });
   }
 });
