@@ -256,7 +256,7 @@ const NavBar = () => {
           <div className="flex-shrink-0 mr-1 lg:mr-8">
             <div className="text-sm font-bold text-blue-700 leading-tight">
               <div className="text-xs sm:text-sm lg:text-base font-bold">Sistem Informasi Peralatan</div>
-              <div className="text-[10px] sm:text-xs font-medium text-blue-600">Modern Widya Tehnical</div>
+              <div className="text-[10px] sm:text-xs font-medium text-blue-600"></div>
               {activeProject && (
                 <div className="text-[9px] sm:text-[10px] font-semibold text-blue-800 mt-0.5">
                   {activeProject.namaProject}
