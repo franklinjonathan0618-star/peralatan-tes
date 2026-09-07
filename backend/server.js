@@ -749,7 +749,6 @@ app.post("/api/system/save-permissions", async (req, res) => {
     ]);
 
     if (permissions.length > 0) {
-      const { v4: uuidv4 } = require("uuid");
       for (const perm of permissions) {
         const permissionId = permIdMap[perm.page_key];
         if (!permissionId) {
@@ -758,13 +757,15 @@ app.post("/api/system/save-permissions", async (req, res) => {
           );
           continue;
         }
+        // Kolom `id` di tabel `user_permissions` adalah bigint AUTO_INCREMENT,
+        // jadi tidak boleh diisi manual dengan UUID (itu penyebab error
+        // "Out of range value for column 'id'"). Biarkan MySQL yang mengisinya.
         await db.query(
           `INSERT INTO \`user_permissions\`
-             (id, user_id, permission_id, can_view, can_create, can_edit, can_delete,
+             (user_id, permission_id, can_view, can_create, can_edit, can_delete,
               can_export_excel, can_export_pdf, can_import, can_approve, can_print)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            uuidv4(),
             user_id,
             permissionId,
             perm.can_view ? 1 : 0,
