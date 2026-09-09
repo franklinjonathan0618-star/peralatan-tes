@@ -28,7 +28,7 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
 
   const statusAlatConfig: Record<string, { label: string; cls: string }> = {
     toko: { label: 'Toko', cls: 'bg-red-100 text-red-800' },
-    kanibal: { label: 'Kanibal dan Toko', cls: 'bg-orange-100 text-orange-800' },
+    kanibal: { label: 'Kanibal', cls: 'bg-orange-100 text-orange-800' },
     pemutihan: { label: 'Toko', cls: 'bg-purple-100 text-purple-800' },
   };
   const sac = statusAlatConfig[pemutihan.status] || statusAlatConfig.toko;
@@ -125,7 +125,7 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
                     handleStatusUpdate('kanibal');
                   }}
                 >
-                  Kanibal dan Toko
+                  Kanibal
                 </Button>
                 <Button
                   size="sm"
