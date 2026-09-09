@@ -303,6 +303,7 @@ const TABLES = [
   "rpa_details",
   "sewa_alat",
   "sewa_alat_eksternal",
+  "sewa_alat_internal",
   "sparepart",
   "sparepart_transactions",
   "timesheet",
