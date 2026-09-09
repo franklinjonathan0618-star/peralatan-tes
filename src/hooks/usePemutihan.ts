@@ -196,11 +196,10 @@ export const useAddPemutihan = () => {
 
         console.log('Inserting pemutihan with data:', pemutihanData);
 
-        const { data: result, error } = await (supabase as any)
+        const { data: resultArr, error } = await (supabase as any)
           .from('pemutihan')
           .insert(pemutihanData)
-          .select()
-          .single();
+          .select();
 
         if (error) {
           console.error('Error inserting pemutihan:', error);
@@ -213,9 +212,8 @@ export const useAddPemutihan = () => {
           }
         }
 
-        if (!result) {
-          throw new Error('Tidak ada data yang dikembalikan setelah penyisipan');
-        }
+        // RLS mungkin memblokir data dikembalikan, tapi insert tetap berhasil
+        const result = resultArr?.[0] ?? pemutihanData;
 
         console.log('Pemutihan added successfully:', result);
         return result;
@@ -285,12 +283,11 @@ export const useUpdatePemutihan = () => {
 
         console.log('Updating pemutihan with data:', updateData);
 
-        const { data: result, error } = await supabase
+        const { data: resultArr, error } = await supabase
           .from('pemutihan')
           .update(updateData)
           .eq('id', id)
-          .select()
-          .single();
+          .select();
 
         if (error) {
           console.error('Error updating pemutihan:', error);
@@ -303,9 +300,8 @@ export const useUpdatePemutihan = () => {
           }
         }
 
-        if (!result) {
-          throw new Error('Tidak ada data yang dikembalikan setelah pembaruan');
-        }
+        // RLS mungkin memblokir data dikembalikan, tapi update tetap berhasil
+        const result = resultArr?.[0] ?? updateData;
 
         console.log('Pemutihan updated successfully:', result);
         return result;

@@ -162,40 +162,40 @@ const PemutihanAlat = () => {
     if (statusLower === 'toko') {
       return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Toko</span>;
     } else if (statusLower === 'kanibal') {
-      return <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-200 text-orange-800">Kanibal dan Toko</span>;
+      return <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-200 text-orange-800">Kanibal</span>;
     }
     return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{status}</span>;
   };
 
-const getPemutihanStatusBadge = (status?: string) => {
-  const statusLower = status?.toLowerCase() || 'pending';
+  const getPemutihanStatusBadge = (status?: string) => {
+    const statusLower = status?.toLowerCase() || 'pending';
 
-  if (statusLower === 'approved') {
-    return (
-      <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-        Disetujui
-      </span>
-    );
-  } else if (statusLower === 'rejected') {
-    return (
-      <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-        Ditolak
-      </span>
-    );
-  } else if (statusLower === 'completed') {
-    return (
-      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-        Selesai
-      </span>
-    );
-  }
+    if (statusLower === 'approved') {
+      return (
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          Disetujui
+        </span>
+      );
+    } else if (statusLower === 'rejected') {
+      return (
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          Ditolak
+        </span>
+      );
+    } else if (statusLower === 'completed') {
+      return (
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          Selesai
+        </span>
+      );
+    }
 
-  return (
-    <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-      Menunggu
-    </span>
-  );
-};
+    return (
+      <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+        Menunggu
+      </span>
+    );
+  };
 
   const handlePrintSingle = (item: Pemutihan) => {
     const printWindow = window.open('', '', 'width=800,height=600');
@@ -560,7 +560,7 @@ const getPemutihanStatusBadge = (status?: string) => {
                   required
                 >
                   <option value="toko">Toko</option>
-                  <option value="kanibal">Kanibal dan Toko</option>
+                  <option value="kanibal">Kanibal</option>
                 </select>
               </div>
               <div className="space-y-2">
