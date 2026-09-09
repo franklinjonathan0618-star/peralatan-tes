@@ -11,15 +11,15 @@ interface OilStockSummaryProps {
 const OilStockSummary: React.FC<OilStockSummaryProps> = ({ transactions, currentStock }) => {
   const totalPembelian = transactions
     .filter(item => item.jenis === 'pembelian')
-    .reduce((sum, item) => sum + item.volume, 0);
+    .reduce((sum, item) => sum + (item.jumlahMasuk !== undefined && item.jumlahMasuk !== null ? item.jumlahMasuk : item.volume), 0);
     
   const totalSisaStock = transactions
     .filter(item => item.jenis === 'sisa_stock')
-    .reduce((sum, item) => sum + item.volume, 0);
+    .reduce((sum, item) => sum + (item.jumlahMasuk !== undefined && item.jumlahMasuk !== null ? item.jumlahMasuk : item.volume), 0);
 
   const totalPemakaian = transactions
     .filter(item => item.jenis === 'pemakaian')
-    .reduce((sum, item) => sum + item.volume, 0);
+    .reduce((sum, item) => sum + (item.jumlahKeluar !== undefined && item.jumlahKeluar !== null ? item.jumlahKeluar : item.volume), 0);
     
   const calculatedStock = (totalPembelian + totalSisaStock) - totalPemakaian;
   const displayStock = currentStock !== undefined ? currentStock : calculatedStock;

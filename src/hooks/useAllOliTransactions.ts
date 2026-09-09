@@ -53,6 +53,8 @@ export interface OliTransaction {
   tanggal: string;
   jenis: 'pembelian' | 'pemakaian' | 'sisa_stock';
   volume: number;
+  jumlahMasuk?: number;
+  jumlahKeluar?: number;
   hargaPembelian: number;
   totalHarga: number;
   keterangan: string;
@@ -83,18 +85,29 @@ const fetchAllOliTransactions = async () => {
     if (error) throw error;
 
     // Map the data to our OliTransaction type and include oil type info
-    return (data || []).map((item: any) => ({
-      id: item.id,
-      tanggal: item.tanggal,
-      jenis: item.jenis,
-      volume: Number(item.jumlah),
-      hargaPembelian: Number(item.cost || 0),
-      totalHarga: item.cost && item.jumlah ? Number(item.cost) * Number(item.jumlah) : 0,
-      keterangan: item.keterangan || '',
-      oilTypeId: item.jenis_oli,
-      oilTypeName: item.jenis_oli,
-      lokasiProyek: item.no_lambung || ''
-    })) as OliTransaction[];
+    return (data || []).map((item: any) => {
+      const rawMasuk = item.jumlah_masuk !== undefined && item.jumlah_masuk !== null ? Number(item.jumlah_masuk) : undefined;
+      const rawKeluar = item.jumlah_keluar !== undefined && item.jumlah_keluar !== null ? Number(item.jumlah_keluar) : undefined;
+      const rawJumlah = Number(item.jumlah) || 0;
+      const jMasuk = rawMasuk !== undefined ? rawMasuk : (item.jenis === 'pembelian' || item.jenis === 'sisa_stock' ? rawJumlah : 0);
+      const jKeluar = rawKeluar !== undefined ? rawKeluar : (item.jenis === 'pemakaian' ? rawJumlah : 0);
+      const effVolume = rawJumlah || (item.jenis === 'pemakaian' ? jKeluar : jMasuk);
+
+      return {
+        id: item.id,
+        tanggal: item.tanggal,
+        jenis: item.jenis,
+        volume: effVolume,
+        jumlahMasuk: jMasuk,
+        jumlahKeluar: jKeluar,
+        hargaPembelian: Number(item.cost || 0),
+        totalHarga: item.cost && effVolume ? Number(item.cost) * effVolume : 0,
+        keterangan: item.keterangan || '',
+        oilTypeId: item.jenis_oli,
+        oilTypeName: item.jenis_oli,
+        lokasiProyek: item.no_lambung || ''
+      };
+    }) as OliTransaction[];
   } catch (err) {
     console.warn('Supabase oil transactions unavailable, using mock data', err);
     return MOCK_OLI_DATA;

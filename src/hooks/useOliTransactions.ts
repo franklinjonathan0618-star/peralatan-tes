@@ -18,18 +18,29 @@ export const useOliTransactions = (oilType: string) => {
         throw error;
       }
       
-      return data?.map((item: any) => ({
-        id: item.id,
-        tanggal: item.tanggal,
-        jenis: item.jenis as 'pembelian' | 'pemakaian' | 'sisa_stock',
-        volume: Number(item.jumlah),
-        hargaPembelian: item.cost ? Number(item.cost) : undefined,
-        totalHarga: item.cost && item.jumlah ? Number(item.cost) * Number(item.jumlah) : undefined,
-        keterangan: item.keterangan,
-        noLambung: item.no_lambung || undefined,
-        namaAlat: item.nama_alat || undefined,
-        lokasiProyek: item.lokasiProyek || undefined
-      })) || [];
+      return data?.map((item: any) => {
+        const rawMasuk = item.jumlah_masuk !== undefined && item.jumlah_masuk !== null ? Number(item.jumlah_masuk) : undefined;
+        const rawKeluar = item.jumlah_keluar !== undefined && item.jumlah_keluar !== null ? Number(item.jumlah_keluar) : undefined;
+        const rawJumlah = Number(item.jumlah) || 0;
+        const jMasuk = rawMasuk !== undefined ? rawMasuk : (item.jenis === 'pembelian' || item.jenis === 'sisa_stock' ? rawJumlah : 0);
+        const jKeluar = rawKeluar !== undefined ? rawKeluar : (item.jenis === 'pemakaian' ? rawJumlah : 0);
+        const effVolume = rawJumlah || (item.jenis === 'pemakaian' ? jKeluar : jMasuk);
+
+        return {
+          id: item.id,
+          tanggal: item.tanggal,
+          jenis: item.jenis as 'pembelian' | 'pemakaian' | 'sisa_stock',
+          volume: effVolume,
+          jumlahMasuk: jMasuk,
+          jumlahKeluar: jKeluar,
+          hargaPembelian: item.cost ? Number(item.cost) : undefined,
+          totalHarga: item.cost && effVolume ? Number(item.cost) * effVolume : undefined,
+          keterangan: item.keterangan,
+          noLambung: item.no_lambung || undefined,
+          namaAlat: item.nama_alat || undefined,
+          lokasiProyek: item.lokasiProyek || undefined
+        };
+      }) || [];
     },
   });
 };
@@ -71,23 +82,35 @@ export const useAddOliTransaction = () => {
   return useMutation({
     mutationFn: async (data: OliTransaction & { oilType: string }) => {
       try {
-        if (!data.tanggal || !data.volume || !data.oilType) {
-          throw new Error('Tanggal, Volume, dan Jenis Oli harus diisi');
+        const jMasuk = data.jumlahMasuk ?? (data.jenis !== 'pemakaian' ? data.volume : 0);
+        const jKeluar = data.jumlahKeluar ?? (data.jenis === 'pemakaian' ? data.volume : 0);
+        const effectiveVolume = data.jenis === 'pembelian'
+          ? (jMasuk || data.volume || 0)
+          : data.jenis === 'pemakaian'
+            ? (jKeluar || data.volume || 0)
+            : (jMasuk || data.volume || 0) - (jKeluar || 0);
+
+        if (!data.tanggal || !data.oilType || (!jMasuk && !jKeluar && !effectiveVolume)) {
+          throw new Error('Tanggal, Jumlah Masuk/Keluar, dan Jenis Oli harus diisi');
         }
+
+        const insertPayload: any = {
+          jenis_oli: data.oilType,
+          tanggal: data.tanggal,
+          jenis: data.jenis,
+          jumlah: Math.abs(effectiveVolume) || jMasuk || jKeluar,
+          jumlah_masuk: jMasuk || 0,
+          jumlah_keluar: jKeluar || 0,
+          cost: data.hargaPembelian || null,
+          keterangan: data.keterangan || '',
+          no_lambung: data.noLambung || '',
+          nama_alat: data.namaAlat || '',
+          "lokasiProyek": data.lokasiProyek || null
+        };
 
         const { error } = await supabase
           .from('oli_transactions')
-          .insert({
-            jenis_oli: data.oilType,
-            tanggal: data.tanggal,
-            jenis: data.jenis,
-            jumlah: data.volume,
-            cost: data.hargaPembelian || null,
-            keterangan: data.keterangan || '',
-            no_lambung: data.noLambung || '',
-            nama_alat: data.namaAlat || '',
-            "lokasiProyek": data.lokasiProyek || null
-          });
+          .insert(insertPayload);
         
         if (error) {
           console.error('Oli Insert Error:', error.code, error.message, error.details);
@@ -95,7 +118,9 @@ export const useAddOliTransaction = () => {
         }
         
         // Update stock: pembelian/sisa_stock -> +volume, pemakaian -> -volume
-        const delta = (data.jenis === 'pembelian' || data.jenis === 'sisa_stock') ? data.volume : -data.volume;
+        const delta = (data.jenis === 'pembelian' || data.jenis === 'sisa_stock')
+          ? (jMasuk || effectiveVolume)
+          : -(jKeluar || effectiveVolume);
         await adjustOliStock(data.oilType, delta);
       } catch (error: any) {
         console.error('Error in useAddOliTransaction:', error);
@@ -118,8 +143,17 @@ export const useUpdateOliTransaction = () => {
     mutationFn: async (data: OliTransaction & { oilType: string; oldVolume?: number; oldJenis?: 'pembelian' | 'pemakaian' | 'sisa_stock' }) => {
       try {
         if (!data.id) throw new Error('ID is required for update');
-        if (!data.tanggal || !data.volume) {
-          throw new Error('Tanggal dan Volume harus diisi');
+
+        const jMasuk = data.jumlahMasuk ?? (data.jenis !== 'pemakaian' ? data.volume : 0);
+        const jKeluar = data.jumlahKeluar ?? (data.jenis === 'pemakaian' ? data.volume : 0);
+        const effectiveVolume = data.jenis === 'pembelian'
+          ? (jMasuk || data.volume || 0)
+          : data.jenis === 'pemakaian'
+            ? (jKeluar || data.volume || 0)
+            : (jMasuk || data.volume || 0) - (jKeluar || 0);
+
+        if (!data.tanggal || (!jMasuk && !jKeluar && !effectiveVolume)) {
+          throw new Error('Tanggal dan Jumlah Masuk/Keluar harus diisi');
         }
 
         // Ambil data transaksi lama jika oldVolume/oldJenis belum lengkap
@@ -141,18 +175,22 @@ export const useUpdateOliTransaction = () => {
           }
         }
 
+        const updatePayload: any = {
+          tanggal: data.tanggal,
+          jenis: data.jenis,
+          jumlah: Math.abs(effectiveVolume) || jMasuk || jKeluar,
+          jumlah_masuk: jMasuk || 0,
+          jumlah_keluar: jKeluar || 0,
+          cost: data.hargaPembelian || null,
+          keterangan: data.keterangan || '',
+          no_lambung: data.noLambung || '',
+          nama_alat: data.namaAlat || '',
+          "lokasiProyek": data.lokasiProyek || null
+        };
+
         const { error } = await supabase
           .from('oli_transactions')
-          .update({
-            tanggal: data.tanggal,
-            jenis: data.jenis,
-            jumlah: data.volume,
-            cost: data.hargaPembelian || null,
-            keterangan: data.keterangan || '',
-            no_lambung: data.noLambung || '',
-            nama_alat: data.namaAlat || '',
-            "lokasiProyek": data.lokasiProyek || null
-          })
+          .update(updatePayload)
           .eq('id', String(data.id));
         
         if (error) {
@@ -170,8 +208,8 @@ export const useUpdateOliTransaction = () => {
         
         // 2. Terapkan efek transaksi baru
         const applyNew = (data.jenis === 'pembelian' || data.jenis === 'sisa_stock')
-          ? data.volume
-          : -data.volume;
+          ? (jMasuk || effectiveVolume)
+          : -(jKeluar || effectiveVolume);
         await adjustOliStock(data.oilType, applyNew);
       } catch (error: any) {
         console.error('Error in useUpdateOliTransaction:', error);

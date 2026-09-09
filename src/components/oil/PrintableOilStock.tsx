@@ -53,12 +53,13 @@ const PrintableOilStock: React.FC<PrintableOilStockProps> = ({ transactions, oil
             <th className="border border-gray-400 px-2 py-1.5" style={{ width: '35px' }}>No</th>
             <th className="border border-gray-400 px-2 py-1.5">Tanggal</th>
             <th className="border border-gray-400 px-2 py-1.5">Jenis Transaksi</th>
-            <th className="border border-gray-400 px-2 py-1.5">Volume (L)</th>
-            <th className="border border-gray-400 px-2 py-1.5">Harga per Liter</th>
-            <th className="border border-gray-400 px-2 py-1.5">Total Harga</th>
+            <th className="border border-gray-400 px-2 py-1.5">Jumlah Masuk (L)</th>
+            <th className="border border-gray-400 px-2 py-1.5">Jumlah Keluar (L)</th>
             <th className="border border-gray-400 px-2 py-1.5">No. Lambung</th>
             <th className="border border-gray-400 px-2 py-1.5">Nama Alat</th>
             <th className="border border-gray-400 px-2 py-1.5">Lokasi Proyek</th>
+            <th className="border border-gray-400 px-2 py-1.5">Harga per Liter</th>
+            <th className="border border-gray-400 px-2 py-1.5">Total Harga</th>
             <th className="border border-gray-400 px-2 py-1.5">Keterangan</th>
           </tr>
         </thead>
@@ -75,12 +76,17 @@ const PrintableOilStock: React.FC<PrintableOilStockProps> = ({ transactions, oil
                   {item.jenis === 'pembelian' ? 'Pembelian' : item.jenis === 'sisa_stock' ? 'Sisa Stock' : 'Pemakaian'}
                 </span>
               </td>
-              <td className="border border-gray-400 px-2 py-1 text-right font-medium">{item.volume.toLocaleString('id-ID')}</td>
-              <td className="border border-gray-400 px-2 py-1 text-right">{item.hargaPembelian ? formatCurrency(item.hargaPembelian) : '-'}</td>
-              <td className="border border-gray-400 px-2 py-1 text-right">{item.totalHarga ? formatCurrency(item.totalHarga) : '-'}</td>
+              <td className="border border-gray-400 px-2 py-1 text-right font-medium">
+                {item.jumlahMasuk ? item.jumlahMasuk.toLocaleString('id-ID') : (item.jenis === 'pembelian' || item.jenis === 'sisa_stock' ? item.volume.toLocaleString('id-ID') : '-')}
+              </td>
+              <td className="border border-gray-400 px-2 py-1 text-right font-medium">
+                {item.jumlahKeluar ? item.jumlahKeluar.toLocaleString('id-ID') : (item.jenis === 'pemakaian' ? item.volume.toLocaleString('id-ID') : '-')}
+              </td>
               <td className="border border-gray-400 px-2 py-1">{item.noLambung || '-'}</td>
               <td className="border border-gray-400 px-2 py-1">{item.namaAlat || '-'}</td>
               <td className="border border-gray-400 px-2 py-1">{item.lokasiProyek || '-'}</td>
+              <td className="border border-gray-400 px-2 py-1 text-right">{item.hargaPembelian ? formatCurrency(item.hargaPembelian) : '-'}</td>
+              <td className="border border-gray-400 px-2 py-1 text-right">{item.totalHarga ? formatCurrency(item.totalHarga) : '-'}</td>
               <td className="border border-gray-400 px-2 py-1">{item.keterangan || '-'}</td>
             </tr>
           ))}
@@ -90,8 +96,8 @@ const PrintableOilStock: React.FC<PrintableOilStockProps> = ({ transactions, oil
             <td colSpan={3} className="border border-gray-400 px-2 py-1.5 text-center font-bold">
               Total Sisa Stok (Pembelian + Sisa Stock - Pemakaian)
             </td>
-            <td className="border border-gray-400 px-2 py-1.5 text-right font-bold text-blue-900">
-              {totalStokAkhir.toLocaleString('id-ID')}
+            <td colSpan={2} className="border border-gray-400 px-2 py-1.5 text-center font-bold text-blue-900">
+              {totalStokAkhir.toLocaleString('id-ID')} Liter
             </td>
             <td colSpan={6} className="border border-gray-400 px-2 py-1.5"></td>
           </tr>

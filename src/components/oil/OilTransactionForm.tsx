@@ -19,7 +19,8 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
   
   const [formData, setFormData] = useState({
     tanggal: editingItem?.tanggal || '',
-    volume: editingItem?.volume || 0,
+    jumlahMasuk: editingItem?.jumlahMasuk ?? (editingItem?.jenis !== 'pemakaian' ? (editingItem?.volume || 0) : 0),
+    jumlahKeluar: editingItem?.jumlahKeluar ?? (editingItem?.jenis === 'pemakaian' ? (editingItem?.volume || 0) : 0),
     hargaPembelian: editingItem?.hargaPembelian || 0,
     keterangan: editingItem?.keterangan || '',
     lokasiProyek: editingItem?.lokasiProyek || '',
@@ -36,7 +37,7 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
       const { name, value } = e.target;
       setFormData({
         ...formData,
-        [name]: name === 'volume' || name === 'hargaPembelian' ? parseFloat(value) : value
+        [name]: name === 'jumlahMasuk' || name === 'jumlahKeluar' || name === 'hargaPembelian' ? parseFloat(value) || 0 : value
       });
     } catch (error) {
       console.error('Error updating form:', error);
@@ -44,11 +45,33 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
     }
   };
 
+  // Nilai efektif volume untuk perhitungan stok dan biaya
+  const effectiveVolume = formJenis === 'pembelian'
+    ? (formData.jumlahMasuk || 0)
+    : formJenis === 'pemakaian'
+      ? (formData.jumlahKeluar || 0)
+      : (formData.jumlahMasuk || 0) - (formData.jumlahKeluar || 0);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tanggal || formData.volume <= 0 || !formData.keterangan) {
-      toast.error('Mohon lengkapi semua field yang diperlukan');
+    if (!formData.tanggal || !formData.keterangan) {
+      toast.error('Mohon lengkapi tanggal dan keterangan');
+      return;
+    }
+
+    if (formJenis === 'pembelian' && (!formData.jumlahMasuk || formData.jumlahMasuk <= 0)) {
+      toast.error('Jumlah Masuk harus lebih dari 0 untuk pembelian');
+      return;
+    }
+
+    if (formJenis === 'pemakaian' && (!formData.jumlahKeluar || formData.jumlahKeluar <= 0)) {
+      toast.error('Jumlah Keluar harus lebih dari 0 untuk pemakaian');
+      return;
+    }
+
+    if (formJenis === 'sisa_stock' && !formData.jumlahMasuk && !formData.jumlahKeluar) {
+      toast.error('Jumlah Masuk atau Jumlah Keluar harus diisi untuk sisa stock');
       return;
     }
 
@@ -61,15 +84,16 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
       id: editingItem ? editingItem.id : crypto.randomUUID(),
       tanggal: formData.tanggal,
       jenis: formJenis,
-      volume: formData.volume,
+      volume: Math.abs(effectiveVolume) || formData.jumlahMasuk || formData.jumlahKeluar || 0,
+      jumlahMasuk: formData.jumlahMasuk || 0,
+      jumlahKeluar: formData.jumlahKeluar || 0,
       keterangan: formData.keterangan,
       lokasiProyek: formData.lokasiProyek?.trim() || '',
       noLambung: formJenis === 'pemakaian' ? (formData.noLambung || '') : '',
       namaAlat: formJenis === 'pemakaian' ? (formData.namaAlat || '') : '',
+      hargaPembelian: formData.hargaPembelian,
+      totalHarga: (effectiveVolume || 0) * (formData.hargaPembelian || 0),
     };
-    
-    newTransaction.hargaPembelian = formData.hargaPembelian;
-    newTransaction.totalHarga = formData.volume * formData.hargaPembelian;
     
     onSubmit(newTransaction);
   };
@@ -84,7 +108,10 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
         <div className="inline-flex rounded-md shadow-sm" role="group">
           <button
             type="button"
-            onClick={() => setFormJenis('pembelian')}
+            onClick={() => {
+              setFormJenis('pembelian');
+              setFormData(prev => ({ ...prev, jumlahKeluar: 0 }));
+            }}
             className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
               formJenis === 'pembelian'
                 ? 'bg-primary text-white border-primary'
@@ -95,7 +122,10 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setFormJenis('pemakaian')}
+            onClick={() => {
+              setFormJenis('pemakaian');
+              setFormData(prev => ({ ...prev, jumlahMasuk: 0 }));
+            }}
             className={`px-4 py-2 text-sm font-medium border ${
               formJenis === 'pemakaian'
                 ? 'bg-primary text-white border-primary'
@@ -119,9 +149,9 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
       </div>
       
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <label htmlFor="tanggal" className="text-sm font-medium">
-            Tanggal {formJenis === 'pembelian' ? 'Pembelian' : formJenis === 'sisa_stock' ? 'Sisa Stock' : 'Pemakaian'}
+            Tanggal {formJenis === 'pembelian' ? 'Pembelian' : formJenis === 'sisa_stock' ? 'Sisa Stock' : 'Pemakaian'} <span className="text-red-500">*</span>
           </label>
           <input
             id="tanggal"
@@ -135,19 +165,38 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
         </div>
         
         <div className="space-y-2">
-          <label htmlFor="volume" className="text-sm font-medium">
-            Volume (Liter)
+          <label htmlFor="jumlahMasuk" className="text-sm font-medium">
+            Jumlah Masuk (Liter) {formJenis !== 'pemakaian' && <span className="text-red-500">*</span>}
           </label>
           <input
-            id="volume"
-            name="volume"
+            id="jumlahMasuk"
+            name="jumlahMasuk"
             type="number"
             min="0"
             step="0.01"
-            value={formData.volume}
+            value={formData.jumlahMasuk}
+            disabled={formJenis === 'pemakaian'}
             onChange={handleInputChange}
-            className="form-input"
-            required
+            className={`form-input ${formJenis === 'pemakaian' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+            required={formJenis !== 'pemakaian'}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="jumlahKeluar" className="text-sm font-medium">
+            Jumlah Keluar (Liter) {formJenis !== 'pembelian' && <span className="text-red-500">*</span>}
+          </label>
+          <input
+            id="jumlahKeluar"
+            name="jumlahKeluar"
+            type="number"
+            min="0"
+            step="0.01"
+            value={formData.jumlahKeluar}
+            disabled={formJenis === 'pembelian'}
+            onChange={handleInputChange}
+            className={`form-input ${formJenis === 'pembelian' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+            required={formJenis !== 'pembelian'}
           />
         </div>
         
@@ -155,7 +204,7 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
           <>
             <div className="space-y-2">
               <label htmlFor="hargaPembelian" className="text-sm font-medium">
-                Harga per Liter (Rp)
+                Harga per Liter (Rp) <span className="text-red-500">*</span>
               </label>
               <input
                 id="hargaPembelian"
@@ -171,10 +220,10 @@ const OilTransactionForm: React.FC<OilTransactionFormProps> = ({
 
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Total Harga
+                Total Biaya (Rp)
               </label>
               <div className="form-input bg-gray-50 text-gray-700">
-                {formatCurrency((formData.volume || 0) * (formData.hargaPembelian || 0))}
+                {formatCurrency(Math.max(0, effectiveVolume || 0) * (formData.hargaPembelian || 0))}
               </div>
             </div>
           </>

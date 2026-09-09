@@ -209,7 +209,8 @@ const StockOli: React.FC = (): React.ReactElement => {
       No: index + 1,
       Tanggal: item.tanggal ? normalizeDateOnly(item.tanggal) : '-',
       "Jenis Transaksi": item.jenis === "pembelian" ? "Pembelian" : item.jenis === "sisa_stock" ? "Sisa Stock" : "Pemakaian",
-      "Volume (Liter)": item.volume,
+      "Jumlah Masuk (Liter)": item.jumlahMasuk !== undefined ? item.jumlahMasuk : (item.jenis === "pembelian" || item.jenis === "sisa_stock" ? item.volume : 0),
+      "Jumlah Keluar (Liter)": item.jumlahKeluar !== undefined ? item.jumlahKeluar : (item.jenis === "pemakaian" ? item.volume : 0),
       "Harga per Liter (Rp)": item.hargaPembelian || 0,
       "Total Harga (Rp)": item.totalHarga || 0,
       "No. Lambung": item.noLambung || "",
@@ -235,7 +236,8 @@ const StockOli: React.FC = (): React.ReactElement => {
   const expectedOliHeaders = [
     "Tanggal",
     "Jenis Transaksi",
-    "Volume (Liter)",
+    "Jumlah Masuk",
+    "Jumlah Keluar",
     "Harga per Liter (Rp)",
     "Keterangan",
     "No. Lambung",
@@ -331,8 +333,20 @@ const StockOli: React.FC = (): React.ReactElement => {
         }
       }
 
+      const jumlahMasukVal = parseNumeric(findVal(["jumlah masuk", "jumlah_masuk", "masuk", "inflow", "in"]));
+      const jumlahKeluarVal = parseNumeric(findVal(["jumlah keluar", "jumlah_keluar", "keluar", "outflow", "out"]));
       const volumeVal = findVal(["volume (liter)", "volume (l)", "volume", "jumlah", "quantity", "qty", "liter", "l"]);
-      const volume = parseNumeric(volumeVal);
+      let volume = parseNumeric(volumeVal);
+
+      if (volume <= 0) {
+        if (jumlahMasukVal > 0) {
+          volume = jumlahMasukVal;
+          if (!jenisTransaksiVal) jenisTransaksi = "pembelian";
+        } else if (jumlahKeluarVal > 0) {
+          volume = jumlahKeluarVal;
+          if (!jenisTransaksiVal) jenisTransaksi = "pemakaian";
+        }
+      }
 
       const hargaPerLiterVal = findVal(["harga per liter (rp)", "harga per liter", "harga satuan (rp)", "harga satuan", "harga_satuan", "harga", "price", "cost", "rate"]);
       const hargaPerLiter = parseNumeric(hargaPerLiterVal);
@@ -394,9 +408,9 @@ const StockOli: React.FC = (): React.ReactElement => {
         continue;
       }
 
-      if (volume <= 0) {
+      if (volume <= 0 && jumlahMasukVal <= 0 && jumlahKeluarVal <= 0) {
         errors.push(
-          `Baris ${index + 2}: Volume (Liter) tidak valid atau kosong.`,
+          `Baris ${index + 2}: Jumlah Masuk / Jumlah Keluar / Volume (Liter) tidak valid atau kosong.`,
         );
         errorCount++;
         continue;
@@ -417,13 +431,19 @@ const StockOli: React.FC = (): React.ReactElement => {
         continue;
       }
 
+      const finalMasuk = jumlahMasukVal > 0 ? jumlahMasukVal : (jenis === "pembelian" || jenis === "sisa_stock" ? volume : 0);
+      const finalKeluar = jumlahKeluarVal > 0 ? jumlahKeluarVal : (jenis === "pemakaian" ? volume : 0);
+      const finalVolume = volume > 0 ? volume : (jenis === "pemakaian" ? finalKeluar : finalMasuk);
+
       const newTransaction: Omit<OliTransaction, "id" | "totalHarga"> & {
         hargaPembelian?: number;
         totalHarga?: number;
       } = {
         tanggal: tanggalFormatted,
         jenis: jenis,
-        volume: volume,
+        volume: finalVolume,
+        jumlahMasuk: finalMasuk,
+        jumlahKeluar: finalKeluar,
         keterangan: keteranganExcel || (jenis === "sisa_stock" ? "Sisa Stock" : jenis === "pembelian" ? "Pembelian" : "Pemakaian"),
         noLambung: jenis === "pemakaian" ? (noLambungExcel || "") : "",
         namaAlat: jenis === "pemakaian" ? (namaAlatExcel || "") : "",
@@ -432,10 +452,10 @@ const StockOli: React.FC = (): React.ReactElement => {
 
       if (jenis === "pembelian") {
         newTransaction.hargaPembelian = hargaPerLiter;
-        newTransaction.totalHarga = volume * hargaPerLiter;
+        newTransaction.totalHarga = finalVolume * hargaPerLiter;
       } else if (jenis === "sisa_stock") {
         newTransaction.hargaPembelian = hargaPerLiter || 0;
-        newTransaction.totalHarga = volume * (hargaPerLiter || 0);
+        newTransaction.totalHarga = finalVolume * (hargaPerLiter || 0);
       } else if (jenis === "pemakaian") {
         newTransaction.hargaPembelian = 0;
         newTransaction.totalHarga = 0;
@@ -686,13 +706,14 @@ const StockOli: React.FC = (): React.ReactElement => {
               <tr>
                 <th>Tanggal</th>
                 <th>Jenis</th>
-                <th>Volume (L)</th>
-                <th>Harga per Liter</th>
-                <th>Total Harga</th>
-                <th>Keterangan</th>
+                <th>Jumlah Masuk</th>
+                <th>Jumlah Keluar</th>
                 <th>No. Lambung</th>
                 <th>Nama Alat</th>
                 <th>Lokasi Proyek</th>
+                <th>Harga per Liter</th>
+                <th>Total Harga</th>
+                <th>Keterangan</th>
                 {canShowActions && <th>Aksi</th>}
               </tr>
             </thead>
@@ -714,7 +735,15 @@ const StockOli: React.FC = (): React.ReactElement => {
                         {item.jenis === "pembelian" ? "Pembelian" : item.jenis === "sisa_stock" ? "Sisa Stock" : "Pemakaian"}
                       </span>
                     </td>
-                    <td>{item.volume.toLocaleString("id-ID")}</td>
+                    <td>
+                      {item.jumlahMasuk ? item.jumlahMasuk.toLocaleString("id-ID") : (item.jenis === "pembelian" || item.jenis === "sisa_stock" ? item.volume.toLocaleString("id-ID") : "-")}
+                    </td>
+                    <td>
+                      {item.jumlahKeluar ? item.jumlahKeluar.toLocaleString("id-ID") : (item.jenis === "pemakaian" ? item.volume.toLocaleString("id-ID") : "-")}
+                    </td>
+                    <td>{item.noLambung || "-"}</td>
+                    <td>{item.namaAlat || "-"}</td>
+                    <td>{item.lokasiProyek || "-"}</td>
                     <td>
                       {item.hargaPembelian
                         ? formatCurrency(item.hargaPembelian)
@@ -724,9 +753,6 @@ const StockOli: React.FC = (): React.ReactElement => {
                       {item.totalHarga ? formatCurrency(item.totalHarga) : "-"}
                     </td>
                     <td>{item.keterangan}</td>
-                    <td>{item.noLambung || "-"}</td>
-                    <td>{item.namaAlat || "-"}</td>
-                    <td>{item.lokasiProyek || "-"}</td>
                     {canShowActions && (
                       <td>
                         <div className="flex gap-2">
@@ -753,7 +779,7 @@ const StockOli: React.FC = (): React.ReactElement => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="text-center py-4">
+                  <td colSpan={canShowActions ? 11 : 10} className="text-center py-4">
                     {searchTerm
                       ? "Tidak ada data yang sesuai dengan pencarian"
                       : "Belum ada data transaksi oli"}

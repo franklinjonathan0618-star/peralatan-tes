@@ -4,6 +4,8 @@ export interface OliTransaction {
   tanggal: string;
   jenis: 'pembelian' | 'pemakaian' | 'sisa_stock';
   volume: number;
+  jumlahMasuk?: number;
+  jumlahKeluar?: number;
   hargaPembelian?: number;
   totalHarga?: number;
   keterangan: string;
