@@ -79,7 +79,7 @@ export interface Pemutihan {
   merk?: string;
   tipe?: string;
   part_terlepas?: string;
-status: 'kanibal' | 'terjual' | 'pemutihan';
+status: 'kanibal' | 'toko' | 'pemutihan';
   status_pemutihan?: 'pending' | 'approved' | 'rejected' | 'completed';
   keterangan?: string;
   tanggal?: string;

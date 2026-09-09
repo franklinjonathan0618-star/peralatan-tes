@@ -37,7 +37,7 @@ const PemutihanAlat = () => {
     merk: '',
     tipe: '',
     part_terlepas: [''],
-    status: 'terjual' as 'terjual' | 'kanibal' | 'pemutihan',
+    status: 'toko' as 'toko' | 'kanibal' | 'pemutihan',
     keterangan: '',
     tanggal: '',
   });
@@ -72,7 +72,7 @@ const PemutihanAlat = () => {
       merk: '',
       tipe: '',
       part_terlepas: [''],
-      status: 'terjual',
+      status: 'toko',
       keterangan: '',
       tanggal: '',
     });
@@ -159,10 +159,10 @@ const PemutihanAlat = () => {
 
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
-    if (statusLower === 'terjual') {
-      return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Terjual</span>;
+    if (statusLower === 'toko') {
+      return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Toko</span>;
     } else if (statusLower === 'kanibal') {
-      return <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-200 text-orange-800">Kanibal</span>;
+      return <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-200 text-orange-800">Kanibal dan Toko</span>;
     }
     return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{status}</span>;
   };
@@ -559,8 +559,8 @@ const getPemutihanStatusBadge = (status?: string) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
-                  <option value="terjual">Terjual</option>
-                  <option value="kanibal">Kanibal</option>
+                  <option value="toko">Toko</option>
+                  <option value="kanibal">Kanibal dan Toko</option>
                 </select>
               </div>
               <div className="space-y-2">

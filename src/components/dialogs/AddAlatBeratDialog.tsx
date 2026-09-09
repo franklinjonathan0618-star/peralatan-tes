@@ -53,7 +53,7 @@ export function AddAlatBeratDialog({ onSubmit, className }: AddAlatBeratDialogPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validasi field yang wajib diisi
     const missingFields = [];
     if (!formData.no_lambung?.trim()) missingFields.push('No. Lambung');
@@ -264,7 +264,7 @@ export function AddAlatBeratDialog({ onSubmit, className }: AddAlatBeratDialogPr
                     <SelectItem value="standby">Standby</SelectItem>
                     <SelectItem value="sedang digunakan">Sedang Digunakan</SelectItem>
                     <SelectItem value="kanibal">Kanibal</SelectItem>
-                    <SelectItem value="pemutihan">Pemutihan</SelectItem>
+                    <SelectItem value="toko">Toko</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -68,7 +68,7 @@ const DataAlatBerat = () => {
 
   // Calculate pemutihan statistics
   const kanibalCount = pemutihanData.filter(p => p.status === 'kanibal').length;
-  const terjualCount = pemutihanData.filter(p => p.status === 'terjual').length;
+  const terjualCount = pemutihanData.filter(p => p.status === 'toko').length;
 
   // State untuk data yang difilter
   const [filteredData, setFilteredData] = useState<LocalAlatBerat[]>([]);
@@ -900,7 +900,7 @@ const DataAlatBerat = () => {
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-2xl font-bold text-red-600">{terjualCount}</span>
-                <span className="text-xs text-muted-foreground">Terjual</span>
+                <span className="text-xs text-muted-foreground">Toko</span>
               </div>
             </div>
           </CardContent>

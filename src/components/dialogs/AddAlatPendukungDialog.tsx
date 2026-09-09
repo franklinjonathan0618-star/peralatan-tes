@@ -212,8 +212,8 @@ export function AddAlatPendukungDialog({ onSubmit, className }: AddAlatPendukung
                   <SelectContent>
                     <SelectItem value="standby">Standby</SelectItem>
                     <SelectItem value="sedang digunakan">Sedang Digunakan</SelectItem>
-                    <SelectItem value="kanibal">Kanibal</SelectItem>
-                    <SelectItem value="pemutihan">Pemutihan</SelectItem>
+                    <SelectItem value="kanibal">Kanibal dan Toko</SelectItem>
+                    <SelectItem value="pemutihan">Toko</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

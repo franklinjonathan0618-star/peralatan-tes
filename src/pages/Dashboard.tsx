@@ -58,10 +58,10 @@ const Dashboard = () => {
 
   // Handle loading state
   const isLoading = isLoadingAlatBerat || isLoadingTimesheet || isLoadingPerbaikan;
-  
+
   // Check if all data sources have critical errors (not loading and no data)
   const hasConnectionError = !isLoading && (!alatBeratData?.length && !timesheetData?.length && !perbaikanData?.length) && (errorAlatBerat || errorTimesheet || errorPerbaikan);
-  
+
   // Handle errors
   useEffect(() => {
     if (errorAlatBerat) {
@@ -100,7 +100,7 @@ const Dashboard = () => {
     const perbaikanProses = perbaikanData.filter(p => p.status === 'dalam_perbaikan').length;
     const totalTimesheet = timesheetData.length;
     const kanibalCount = pemutihanData.filter(p => p.status === 'kanibal').length;
-    const terjualCount = pemutihanData.filter(p => p.status === 'terjual').length;
+    const terjualCount = pemutihanData.filter(p => p.status === 'toko').length;
 
     return {
       totalAlatBerat,
@@ -125,9 +125,9 @@ const Dashboard = () => {
     }
   };
 
-  const getRecentActivities = (): Array<{type: string; message: string; date: string; status: string}> => {
-    const activities: Array<{type: string; message: string; date: string; status: string}> = [];
-    
+  const getRecentActivities = (): Array<{ type: string; message: string; date: string; status: string }> => {
+    const activities: Array<{ type: string; message: string; date: string; status: string }> = [];
+
     // Recent timesheet entries
     if (timesheetData) {
       const recentTimesheet = timesheetData.slice(0, 3);
@@ -140,7 +140,7 @@ const Dashboard = () => {
         });
       });
     }
-    
+
     // Recent repairs
     if (perbaikanData) {
       const recentRepairs = perbaikanData.slice(0, 3);
@@ -153,14 +153,14 @@ const Dashboard = () => {
         });
       });
     }
-    
+
     return activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
   };
 
-  const getMaintenanceAlerts = (): Array<{alat: string; noLambung: string; status: string}> => {
+  const getMaintenanceAlerts = (): Array<{ alat: string; noLambung: string; status: string }> => {
     if (!alatBeratData) return [];
 
-    const alerts: Array<{alat: string; noLambung: string; status: string}> = [];
+    const alerts: Array<{ alat: string; noLambung: string; status: string }> = [];
 
     alatBeratData.forEach(alat => {
       const kondisi = alat.kondisi?.toLowerCase();
@@ -203,7 +203,7 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Button 
+            <Button
               onClick={() => window.location.reload()}
               className="mt-4"
             >
@@ -219,8 +219,8 @@ const Dashboard = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={handleLogout}
           className="flex items-center gap-2"
         >
@@ -240,219 +240,219 @@ const Dashboard = () => {
           </div>
         </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Alat Berat</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalAlatBerat}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.alatBeroperasi} beroperasi normal
-            </p>
-          </CardContent>
-        </Card>
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Alat Berat</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalAlatBerat}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.alatBeroperasi} beroperasi normal
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Maintenance</CardTitle>
-            <Wrench className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.alatMaintenance}</div>
-            <p className="text-xs text-muted-foreground">
-              Alat dalam maintenance
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Maintenance</CardTitle>
+              <Wrench className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.alatMaintenance}</div>
+              <p className="text-xs text-muted-foreground">
+                Alat dalam maintenance
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rusak</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.alatRusak}</div>
-            <p className="text-xs text-muted-foreground">
-              Perlu perbaikan
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Rusak</CardTitle>
+              <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{stats.alatRusak}</div>
+              <p className="text-xs text-muted-foreground">
+                Perlu perbaikan
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Perbaikan</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPerbaikan}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.perbaikanSelesai} selesai, {stats.perbaikanProses} proses
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Perbaikan</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalPerbaikan}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.perbaikanSelesai} selesai, {stats.perbaikanProses} proses
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pemutihan Alat</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-orange-600">{stats.kanibalCount}</span>
-                <span className="text-xs text-muted-foreground">Kanibal</span>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pemutihan Alat</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-bold text-orange-600">{stats.kanibalCount}</span>
+                  <span className="text-xs text-muted-foreground">Kanibal</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-bold text-red-600">{stats.terjualCount}</span>
+                  <span className="text-xs text-muted-foreground">Toko</span>
+                </div>
               </div>
-              <div className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-red-600">{stats.terjualCount}</span>
-                <span className="text-xs text-muted-foreground">Terjual</span>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Oil Stock Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Stock Oli SAE 40</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {oliStocks.find(s => s.jenis_oli === 'Oli SAE 40')?.jumlah_stock?.toLocaleString('id-ID') || 0} Liter
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <p className="text-xs text-muted-foreground">
+                Stock saat ini
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Oil Stock Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Oli SAE 40</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {oliStocks.find(s => s.jenis_oli === 'Oli SAE 40')?.jumlah_stock?.toLocaleString('id-ID') || 0} Liter
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Stock saat ini
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Stock Oli SAE 10</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {oliStocks.find(s => s.jenis_oli === 'Oli SAE 10')?.jumlah_stock?.toLocaleString('id-ID') || 0} Liter
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Stock saat ini
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Oli SAE 10</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {oliStocks.find(s => s.jenis_oli === 'Oli SAE 10')?.jumlah_stock?.toLocaleString('id-ID') || 0} Liter
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Stock saat ini
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Stock Oli SAE 90</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {oliStocks.find(s => s.jenis_oli === 'Oli SAE 90')?.jumlah_stock?.toLocaleString('id-ID') || 0} Liter
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Stock saat ini
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Oli SAE 90</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {oliStocks.find(s => s.jenis_oli === 'Oli SAE 90')?.jumlah_stock?.toLocaleString('id-ID') || 0} Liter
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Stock saat ini
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Charts Section */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+          <div className="min-w-0 overflow-hidden">
+            <BBMChart />
+          </div>
+          <div className="min-w-0 overflow-hidden">
+            <RepairStatsChart />
+          </div>
+        </div>
 
-      {/* Charts Section */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-        <div className="min-w-0 overflow-hidden">
-          <BBMChart />
+        {/* Oil Charts Section - Three charts side by side */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="min-w-0 overflow-hidden">
+            <OilChart40 />
+          </div>
+          <div className="min-w-0 overflow-hidden">
+            <OilChart10 />
+          </div>
+          <div className="min-w-0 overflow-hidden">
+            <OilChart90 />
+          </div>
         </div>
-        <div className="min-w-0 overflow-hidden">
-          <RepairStatsChart />
-        </div>
-      </div>
-      
-      {/* Oil Charts Section - Three charts side by side */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="min-w-0 overflow-hidden">
-          <OilChart40 />
-        </div>
-        <div className="min-w-0 overflow-hidden">
-          <OilChart10 />
-        </div>
-        <div className="min-w-0 overflow-hidden">
-          <OilChart90 />
-        </div>
-      </div>
 
-      {/* Recent Activities and Maintenance Alerts */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-1 md:col-span-1 lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Aktivitas Terbaru</CardTitle>
-            <CardDescription>
-              Aktivitas terbaru dalam sistem
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.length > 0 ? (
-                recentActivities.map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {activity.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(activity.date)}
-                      </p>
+        {/* Recent Activities and Maintenance Alerts */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <Card className="col-span-1 md:col-span-1 lg:col-span-4">
+            <CardHeader>
+              <CardTitle>Aktivitas Terbaru</CardTitle>
+              <CardDescription>
+                Aktivitas terbaru dalam sistem
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity, index) => (
+                    <div key={index} className="flex items-center space-x-4">
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {activity.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(activity.date)}
+                        </p>
+                      </div>
+                      <Badge variant={
+                        activity.status === 'success' ? 'default' :
+                          activity.status === 'warning' ? 'secondary' : 'outline'
+                      }>
+                        {activity.type === 'timesheet' ? 'Timesheet' : 'Perbaikan'}
+                      </Badge>
                     </div>
-                    <Badge variant={
-                      activity.status === 'success' ? 'default' : 
-                      activity.status === 'warning' ? 'secondary' : 'outline'
-                    }>
-                      {activity.type === 'timesheet' ? 'Timesheet' : 'Perbaikan'}
-                    </Badge>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">Tidak ada aktivitas terbaru</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Tidak ada aktivitas terbaru</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="col-span-1 md:col-span-1 lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Peringatan Status Alat</CardTitle>
-            <CardDescription>
-              Alat yang sedang maintenance atau rusak
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
-              {maintenanceAlerts.length > 0 ? (
-                maintenanceAlerts.map((alert, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <AlertCircle className="h-4 w-4 text-orange-500" />
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {alert.alat} ({alert.noLambung})
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Status: {alert.status}
-                      </p>
+          <Card className="col-span-1 md:col-span-1 lg:col-span-3">
+            <CardHeader>
+              <CardTitle>Peringatan Status Alat</CardTitle>
+              <CardDescription>
+                Alat yang sedang maintenance atau rusak
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+                {maintenanceAlerts.length > 0 ? (
+                  maintenanceAlerts.map((alert, index) => (
+                    <div key={index} className="flex items-center space-x-4">
+                      <AlertCircle className="h-4 w-4 text-orange-500" />
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {alert.alat} ({alert.noLambung})
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Status: {alert.status}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">Semua alat dalam kondisi baik</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Semua alat dalam kondisi baik</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
     </div>
   );
 };
