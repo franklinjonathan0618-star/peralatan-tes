@@ -1,14 +1,20 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Menu, X, LogOut, ChevronDown, ChevronUp, User, Users, Shield, Settings } from 'lucide-react';
+import { Menu, X, LogOut, ChevronDown, ChevronUp, ChevronRight, User, Users, Shield, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
 import { useCurrentUserViewPermissions } from '@/hooks/useCurrentUserPermissions';
 
-interface SubMenuItem {
+interface ChildMenuItem {
   title: string;
   path: string;
+}
+
+interface SubMenuItem {
+  title: string;
+  path?: string;
+  items?: ChildMenuItem[];
 }
 
 interface MenuItem {
@@ -25,7 +31,13 @@ const menuItems: MenuItem[] = [
     items: [
       { title: 'Data Alat Berat', path: '/data-alat-berat' },
       { title: 'Data Alat Pendukung', path: '/data-alat-pendukung' },
-      { title: 'Sewa Alat', path: '/sewa-alat-eksternal' },
+      {
+        title: 'Sewa Alat',
+        items: [
+          { title: 'Sewa Alat Internal', path: '/sewa-alat-internal' },
+          { title: 'Sewa Alat Eksternal', path: '/sewa-alat-eksternal' },
+        ],
+      },
       { title: 'RPA', path: '/rpa' },
       { title: 'Riwayat Penggunaan Alat', path: '/riwayat-penggunaan-alat' },
       { title: 'Persetujuan Pemutihan Alat', path: '/pemutihan-alat' },
@@ -69,6 +81,7 @@ function pathToPageKey(path: string): string {
     '/data-alat-berat': 'dataAlatBerat',
     '/data-alat-pendukung': 'dataAlatPendukung',
     '/sewa-alat-eksternal': 'sewaAlatEksternal',
+    '/sewa-alat-internal': 'sewaAlatInternal',
     '/rpa': 'rpa',
     '/riwayat-penggunaan-alat': 'riwayatPenggunaanAlat',
     '/pemutihan': 'pemutihan',
@@ -165,7 +178,6 @@ const NavBar = () => {
       if (item.items) {
         // For System menu (adminOnly), check 'system' page permission
         if ((item as any).adminOnly) {
-          // Show system menu if user is admin OR if user has can_view for 'system'
           const hasSystemAccess = user.role === 'admin' ||
             (Object.keys(viewMap).length > 0 && viewMap['system'] === true);
           if (hasSystemAccess) {
@@ -174,7 +186,17 @@ const NavBar = () => {
           continue;
         }
 
-        const filteredItems = item.items.filter(subItem => isPathAccessible(subItem.path));
+        const filteredItems: SubMenuItem[] = [];
+        for (const subItem of item.items) {
+          if (subItem.items) {
+            const accessibleChildren = subItem.items.filter(c => isPathAccessible(c.path));
+            if (accessibleChildren.length > 0) {
+              filteredItems.push({ ...subItem, items: accessibleChildren });
+            }
+          } else if (subItem.path && isPathAccessible(subItem.path)) {
+            filteredItems.push(subItem);
+          }
+        }
 
         if (filteredItems.length > 0) {
           result.push({ ...item, items: filteredItems });
@@ -206,7 +228,24 @@ const NavBar = () => {
   };
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [openSubDropdown, setOpenSubDropdown] = useState<string | null>(null);
+  const [openMobileSubmenu, setOpenMobileSubmenu] = useState<Record<string, boolean>>({
+    'Sewa Alat': true,
+  });
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  const toggleMobileSubmenu = (title: string) => {
+    setOpenMobileSubmenu(prev => ({
+      ...prev,
+      [title]: !prev[title]
+    }));
+  };
+
+  const isItemActive = (subItem: SubMenuItem): boolean => {
+    if (subItem.path) return location.pathname === subItem.path;
+    if (subItem.items) return subItem.items.some(c => location.pathname === c.path);
+    return false;
+  };
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
     const isOutside = Object.values(dropdownRefs.current).every(
@@ -214,6 +253,7 @@ const NavBar = () => {
     );
     if (isOutside) {
       setOpenDropdown(null);
+      setOpenSubDropdown(null);
     }
   }, []);
 
@@ -238,10 +278,12 @@ const NavBar = () => {
 
   const toggleDropdown = useCallback((title: string) => {
     setOpenDropdown(prev => prev === title ? null : title);
+    setOpenSubDropdown(null);
   }, []);
 
   const handleNavigation = useCallback(() => {
     setOpenDropdown(null);
+    setOpenSubDropdown(null);
   }, []);
 
   const setDropdownRef = (title: string, node: HTMLDivElement | null) => {
@@ -274,10 +316,10 @@ const NavBar = () => {
                     <button
                       onClick={() => toggleDropdown(item.title)}
                       className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 ${(item as any).adminOnly
-                        ? item.items?.some(subItem => location.pathname === subItem.path)
+                        ? item.items?.some(subItem => isItemActive(subItem))
                           ? 'bg-red-50 text-red-700 font-medium'
                           : 'text-red-600 hover:bg-red-50/50 hover:text-red-700'
-                        : item.items?.some(subItem => location.pathname === subItem.path)
+                        : item.items?.some(subItem => isItemActive(subItem))
                           ? 'bg-blue-50 text-blue-700 font-medium'
                           : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
                         }`}
@@ -291,28 +333,85 @@ const NavBar = () => {
                       )}
                     </button>
                     {openDropdown === item.title && (
-                      <div className={`absolute left-0 mt-1 w-56 bg-white rounded-lg shadow-lg ring-1 overflow-hidden z-50 ${(item as any).adminOnly ? 'ring-red-100' : 'ring-black ring-opacity-5'}`}>
+                      <div className={`absolute left-0 mt-1 w-56 bg-white rounded-lg shadow-lg ring-1 z-50 ${(item as any).adminOnly ? 'ring-red-100' : 'ring-black ring-opacity-5'}`}>
                         {(item as any).adminOnly && (
-                          <div className="px-4 py-2 bg-red-50 border-b border-red-100">
+                          <div className="px-4 py-2 bg-red-50 border-b border-red-100 rounded-t-lg">
                             <p className="text-xs font-semibold text-red-600 flex items-center gap-1">
                               <Settings className="h-3 w-3" /> Administrasi Sistem
                             </p>
                           </div>
                         )}
                         <div className="py-1">
-                          {item.items.map((subItem) => (
-                            <Link
-                              key={subItem.path}
-                              to={subItem.path}
-                              onClick={() => handleNavigation()}
-                              className={`block px-4 py-2.5 text-sm transition-colors ${location.pathname === subItem.path
-                                ? (item as any).adminOnly ? 'bg-red-50 text-red-700 font-medium' : 'bg-blue-50 text-blue-700 font-medium'
-                                : (item as any).adminOnly ? 'text-gray-700 hover:bg-red-50/50 hover:text-red-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                          {item.items.map((subItem) => {
+                            if (subItem.items) {
+                              const isSubActive = subItem.items.some(c => location.pathname === c.path);
+                              return (
+                                <div
+                                  key={subItem.title}
+                                  className="relative group/nested"
+                                  onMouseEnter={() => setOpenSubDropdown(subItem.title)}
+                                  onMouseLeave={() => setOpenSubDropdown(null)}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenSubDropdown(prev => prev === subItem.title ? null : subItem.title);
+                                    }}
+                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors text-left ${
+                                      isSubActive
+                                        ? 'bg-blue-50 text-blue-700 font-medium'
+                                        : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                    }`}
+                                  >
+                                    <span>{subItem.title}</span>
+                                    <ChevronRight className="h-4 w-4 ml-2 text-gray-400 group-hover/nested:text-blue-600" />
+                                  </button>
+
+                                  {/* Submenu flyout */}
+                                  <div
+                                    className={`absolute left-full top-0 ml-0.5 w-52 bg-white rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 py-1 z-50 transition-all ${
+                                      openSubDropdown === subItem.title ? 'block' : 'hidden group-hover/nested:block'
+                                    }`}
+                                  >
+                                    {subItem.items.map((child) => (
+                                      <Link
+                                        key={child.path}
+                                        to={child.path}
+                                        onClick={() => handleNavigation()}
+                                        className={`block px-4 py-2.5 text-sm transition-colors ${
+                                          location.pathname === child.path
+                                            ? 'bg-blue-50 text-blue-700 font-medium'
+                                            : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                        }`}
+                                      >
+                                        {child.title}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <Link
+                                key={subItem.path || subItem.title}
+                                to={subItem.path || '#'}
+                                onClick={() => handleNavigation()}
+                                className={`block px-4 py-2.5 text-sm transition-colors ${
+                                  location.pathname === subItem.path
+                                    ? (item as any).adminOnly
+                                      ? 'bg-red-50 text-red-700 font-medium'
+                                      : 'bg-blue-50 text-blue-700 font-medium'
+                                    : (item as any).adminOnly
+                                    ? 'text-gray-700 hover:bg-red-50/50 hover:text-red-600'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
                                 }`}
-                            >
-                              {subItem.title}
-                            </Link>
-                          ))}
+                              >
+                                {subItem.title}
+                              </Link>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -415,22 +514,71 @@ const NavBar = () => {
                       {item.title}
                     </div>
                     <div className="pl-4 space-y-1 border-l-2 border-gray-100">
-                      {item.items.map((subItem, subIndex) => (
-                        <Link
-                          key={`${subItem.path}-${subIndex}`}
-                          to={subItem.path}
-                          onClick={() => {
-                            handleNavigation();
-                            toggleMenu();
-                          }}
-                          className={`block px-3 py-2 rounded-md text-sm transition-colors ${location.pathname === subItem.path
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
+                      {item.items.map((subItem, subIndex) => {
+                        if (subItem.items) {
+                          const isSubActive = subItem.items.some(c => location.pathname === c.path);
+                          const isExpanded = openMobileSubmenu[subItem.title] ?? false;
+                          return (
+                            <div key={`${subItem.title}-${subIndex}`} className="space-y-1">
+                              <button
+                                type="button"
+                                onClick={() => toggleMobileSubmenu(subItem.title)}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors text-left ${
+                                  isSubActive
+                                    ? 'bg-blue-50 text-blue-700 font-medium'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                }`}
+                              >
+                                <span>{subItem.title}</span>
+                                {isExpanded ? (
+                                  <ChevronUp className="h-3.5 w-3.5 text-gray-500" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+                                )}
+                              </button>
+                              {isExpanded && (
+                                <div className="pl-4 space-y-1 border-l-2 border-blue-200 ml-2">
+                                  {subItem.items.map((child, childIndex) => (
+                                    <Link
+                                      key={`${child.path}-${childIndex}`}
+                                      to={child.path}
+                                      onClick={() => {
+                                        handleNavigation();
+                                        toggleMenu();
+                                      }}
+                                      className={`block px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                        location.pathname === child.path
+                                          ? 'bg-blue-100/70 text-blue-800 font-medium'
+                                          : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
+                                      }`}
+                                    >
+                                      {child.title}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <Link
+                            key={`${subItem.path || subItem.title}-${subIndex}`}
+                            to={subItem.path || '#'}
+                            onClick={() => {
+                              handleNavigation();
+                              toggleMenu();
+                            }}
+                            className={`block px-3 py-2 rounded-md text-sm transition-colors ${
+                              location.pathname === subItem.path
+                                ? 'bg-blue-50 text-blue-700 font-medium'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
                             }`}
-                        >
-                          {subItem.title}
-                        </Link>
-                      ))}
+                          >
+                            {subItem.title}
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : item.path ? (

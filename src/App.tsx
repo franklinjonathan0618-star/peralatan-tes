@@ -21,6 +21,7 @@ import PageGuard from "./components/PageGuard";
 import DataAlatBerat from "./pages/DataAlatBerat";
 import DataAlatPendukung from "./pages/DataAlatPendukung";
 import SewaAlatEksternal from "./pages/SewaAlatEksternal";
+import SewaAlatInternal from "./pages/SewaAlatInternal";
 import RPA from "./pages/RPA";
 import RiwayatPenggunaanAlat from "./pages/RiwayatPenggunaanAlat";
 import PemutihanAlat from "./pages/PemutihanAlat";
@@ -78,6 +79,7 @@ const App = () => {
                       <Route path="/data-alat-berat" element={<PageGuard pageKey="dataAlatBerat"><DataAlatBerat /></PageGuard>} />
                       <Route path="/data-alat-pendukung" element={<PageGuard pageKey="dataAlatPendukung"><DataAlatPendukung /></PageGuard>} />
                       <Route path="/sewa-alat-eksternal" element={<PageGuard pageKey="sewaAlatEksternal"><SewaAlatEksternal /></PageGuard>} />
+                      <Route path="/sewa-alat-internal" element={<PageGuard pageKey="sewaAlatInternal"><SewaAlatInternal /></PageGuard>} />
                       <Route path="/rpa" element={<PageGuard pageKey="rpa"><RPA /></PageGuard>} />
                       <Route path="/riwayat-penggunaan-alat" element={<PageGuard pageKey="riwayatPenggunaanAlat"><RiwayatPenggunaanAlat /></PageGuard>} />
                       <Route path="/pemutihan" element={<PageGuard pageKey="pemutihan"><Pemutihan /></PageGuard>} />
