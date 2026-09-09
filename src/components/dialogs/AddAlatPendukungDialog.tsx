@@ -59,7 +59,7 @@ export function AddAlatPendukungDialog({ onSubmit, className }: AddAlatPendukung
         description: 'Data alat pendukung berhasil ditambahkan',
       });
       setOpen(false);
-      
+
       // Reset form
       setFormData({
         namaAlat: '',
@@ -213,7 +213,7 @@ export function AddAlatPendukungDialog({ onSubmit, className }: AddAlatPendukung
                     <SelectItem value="standby">Standby</SelectItem>
                     <SelectItem value="sedang digunakan">Sedang Digunakan</SelectItem>
                     <SelectItem value="kanibal">Kanibal</SelectItem>
-                    <SelectItem value="pemutihan">Toko</SelectItem>
+                    <SelectItem value="toko">Toko</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

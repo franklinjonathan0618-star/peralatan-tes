@@ -905,7 +905,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                                         </span>
                                       ) : (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300">
-                                          {item.status || 'Terjual'}
+                                          {item.status || 'Toko'}
                                         </span>
                                       )}
                                     </td>
