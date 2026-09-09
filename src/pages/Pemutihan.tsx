@@ -36,10 +36,10 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
   // Aksi lanjutan setelah pemutihan disetujui di halaman Persetujuan:
   // pilih apakah alat menjadi "Kanibal" atau "Pemutihan"
   const handleStatusUpdate = async (
-    targetStatus: 'kanibal' | 'pemutihan'
+    targetStatus: 'kanibal' | 'toko'
   ) => {
     const statusLabel =
-      targetStatus === 'pemutihan' ? 'Toko' : 'Kanibal dan Toko';
+      targetStatus === 'toko' ? 'Toko' : 'Kanibal';
 
     if (
       !confirm(
@@ -56,30 +56,20 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
       };
 
       // Try to update in alat_berat first
-      const { data: beratData, error: beratError } = await (supabase as any)
+      const { error: beratError } = await (supabase as any)
         .from('alat_berat')
         .update(updateData)
-        .eq('no_lambung', pemutihan.no_lambung)
-        .select('no_lambung');
+        .eq('no_lambung', pemutihan.no_lambung);
 
       if (beratError) {
-        throw beratError;
-      }
-
-      if (!beratData || beratData.length === 0) {
-        const { data: pendukungData, error: pendukungError } =
-          await (supabase as any)
-            .from('alat_pendukung')
-            .update(updateData)
-            .eq('no_lambung', pemutihan.no_lambung)
-            .select('no_lambung');
+        // Jika gagal di alat_berat, coba alat_pendukung
+        const { error: pendukungError } = await (supabase as any)
+          .from('alat_pendukung')
+          .update(updateData)
+          .eq('no_lambung', pemutihan.no_lambung);
 
         if (pendukungError) {
           throw pendukungError;
-        }
-
-        if (!pendukungData || pendukungData.length === 0) {
-          throw new Error('Data alat tidak ditemukan');
         }
       }
 
@@ -143,7 +133,7 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
                   disabled={isPending}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleStatusUpdate('pemutihan');
+                    handleStatusUpdate('toko');
                   }}
                 >
                   Toko
