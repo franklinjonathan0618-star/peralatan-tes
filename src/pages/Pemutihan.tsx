@@ -53,22 +53,19 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
         lokasi: 'Pool BTG',
       };
 
-      // Try to update in alat_berat first
-      const { error: beratError } = await (supabase as any)
-        .from('alat_berat')
-        .update(updateData)
-        .eq('no_lambung', pemutihan.no_lambung);
-
-      if (beratError) {
-        // Jika gagal di alat_berat, coba alat_pendukung
-        const { error: pendukungError } = await (supabase as any)
-          .from('alat_pendukung')
-          .update(updateData)
-          .eq('no_lambung', pemutihan.no_lambung);
-
-        if (pendukungError) {
-          throw pendukungError;
-        }
+      const noLambung = pemutihan.no_lambung?.trim();
+      if (noLambung) {
+        // Update status di alat_berat dan alat_pendukung secara serentak
+        await Promise.allSettled([
+          (supabase as any)
+            .from('alat_berat')
+            .update(updateData)
+            .eq('no_lambung', noLambung),
+          (supabase as any)
+            .from('alat_pendukung')
+            .update(updateData)
+            .eq('no_lambung', noLambung),
+        ]);
       }
 
       // Ubah record pemutihan menjadi selesai
@@ -78,9 +75,12 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
         status_pemutihan: 'completed',
       });
 
-      // Invalidate equipment queries to refresh status
+      // Invalidate equipment queries to refresh status (both naming conventions)
+      queryClient.invalidateQueries({ queryKey: ['alat-berat'] });
+      queryClient.invalidateQueries({ queryKey: ['alat-pendukung'] });
       queryClient.invalidateQueries({ queryKey: ['alatBerat'] });
       queryClient.invalidateQueries({ queryKey: ['alatPendukung'] });
+      queryClient.invalidateQueries({ queryKey: ['pemutihan'] });
 
       alert(`Status alat berhasil diubah menjadi ${statusLabel}`);
     } catch (error) {

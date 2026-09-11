@@ -364,6 +364,13 @@ for (const table of TABLES) {
         "rpa_details",
         "kegiatan_mekanik",
         "silo_dokumen",
+        "pemutihan",
+        "ppa",
+        "timesheet",
+        "perbaikan",
+        "sewa_alat",
+        "sewa_alat_eksternal",
+        "sewa_alat_internal",
       ];
       const useIntId = INT_ID_TABLES.includes(table);
 
@@ -475,10 +482,11 @@ for (const table of TABLES) {
         .join(" AND ");
       const whereVals = Object.values(eqParsed);
 
-      await db.query(`UPDATE \`${table}\` SET ${setCols} WHERE ${whereCols}`, [
+      const [updateResult] = await db.query(`UPDATE \`${table}\` SET ${setCols} WHERE ${whereCols}`, [
         ...setVals,
         ...whereVals,
       ]);
+      console.log(`[PATCH /${table}] WHERE ${whereCols} | affected:`, updateResult?.affectedRows);
 
       if (select || single === "true") {
         const [rows] = await db.query(
@@ -522,7 +530,8 @@ for (const table of TABLES) {
         returnData = processRow(rows[0] || null);
       }
 
-      await db.query(`DELETE FROM \`${table}\` WHERE ${whereCols}`, whereVals);
+      const [delResult] = await db.query(`DELETE FROM \`${table}\` WHERE ${whereCols}`, whereVals);
+      console.log(`[DELETE /${table}] WHERE ${whereCols} | affected:`, delResult?.affectedRows);
 
       res.json({ data: returnData, error: null });
     } catch (err) {

@@ -300,8 +300,7 @@ export const useUpdatePemutihan = () => {
           }
         }
 
-        // RLS mungkin memblokir data dikembalikan, tapi update tetap berhasil
-        const result = resultArr?.[0] ?? updateData;
+        const result = { id, ...(Array.isArray(resultArr) ? resultArr[0] : (resultArr || updateData)) };
 
         console.log('Pemutihan updated successfully:', result);
         return result;
@@ -314,6 +313,8 @@ export const useUpdatePemutihan = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pemutihan'] });
       // Also invalidate equipment queries to refresh status
+      queryClient.invalidateQueries({ queryKey: ['alat-berat'] });
+      queryClient.invalidateQueries({ queryKey: ['alat-pendukung'] });
       queryClient.invalidateQueries({ queryKey: ['alatBerat'] });
       queryClient.invalidateQueries({ queryKey: ['alatPendukung'] });
       toast({
@@ -370,6 +371,10 @@ export const useDeletePemutihan = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pemutihan'] });
+      queryClient.invalidateQueries({ queryKey: ['alat-berat'] });
+      queryClient.invalidateQueries({ queryKey: ['alat-pendukung'] });
+      queryClient.invalidateQueries({ queryKey: ['alatBerat'] });
+      queryClient.invalidateQueries({ queryKey: ['alatPendukung'] });
       toast({
         title: 'Sukses',
         description: 'Data pemutihan berhasil dihapus',
