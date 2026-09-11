@@ -113,9 +113,10 @@ const DataAlatBerat = () => {
       const baik = normalized.filter(item => item.kondisi === 'Baik').length;
       const maintenance = normalized.filter(item => item.kondisi === 'Maintenance').length;
       const rusak = normalized.filter(item => item.kondisi === 'Rusak').length;
+      const sewaLuar = normalized.filter(item => item.status?.toLowerCase() === 'sewa luar').length;
       const totalPemutihan = pemutihanData.length;
 
-      setStats({ total, baik, maintenance, rusak, totalPemutihan });
+      setStats({ total, baik, maintenance, rusak, sewaLuar, totalPemutihan });
     }
   }, [alatBeratData]);
 
@@ -125,6 +126,7 @@ const DataAlatBerat = () => {
     baik: 0,
     maintenance: 0,
     rusak: 0,
+    sewaLuar: 0,
     totalPemutihan: 0
   });
 
@@ -851,7 +853,7 @@ const DataAlatBerat = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Alat Berat</CardTitle>
@@ -886,6 +888,15 @@ const DataAlatBerat = () => {
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.rusak}</div>
             <p className="text-xs text-muted-foreground">Dalam perbaikan</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Sewa Luar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-indigo-600">{stats.sewaLuar}</div>
+            <p className="text-xs text-muted-foreground">Sewa internal</p>
           </CardContent>
         </Card>
         <Card>
@@ -1047,9 +1058,11 @@ const DataAlatBerat = () => {
                             ? 'bg-blue-100 text-blue-800'
                             : item.status === 'kanibal' || item.status === 'pemutihan' || item.status === 'toko'
                               ? 'bg-red-100 text-red-800'
-                              : 'bg-green-100 text-green-800'
+                              : item.status?.toLowerCase() === 'sewa luar'
+                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-300'
+                                : 'bg-green-100 text-green-800'
                             }`}>
-                            {item.status === 'kanibal' ? 'Kanibal/Toko' : (item.status === 'toko' || item.status === 'pemutihan') ? 'Dijual' : item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Standby'}
+                            {item.status === 'kanibal' ? 'Kanibal/Toko' : (item.status === 'toko' || item.status === 'pemutihan') ? 'Dijual' : item.status?.toLowerCase() === 'sewa luar' ? 'Sewa Luar' : item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Standby'}
                           </span>
                         </TableCell>
                         <TableCell>{item.serviceTerakhir ? formatDateDisplay(item.serviceTerakhir) : '-'}</TableCell>

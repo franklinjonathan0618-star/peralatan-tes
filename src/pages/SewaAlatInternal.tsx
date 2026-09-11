@@ -22,6 +22,7 @@ import {
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useSewaAlatInternal, useAddSewaAlatInternal, useUpdateSewaAlatInternal, useDeleteSewaAlatInternal } from '../hooks/useSewaAlatInternal';
+import { useAlatBerat } from '@/hooks/useAlatBerat';
 import { useToast } from '@/components/ui/use-toast';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { SimplePagination, paginateData, getTotalPages } from '@/components/ui/SimplePagination';
@@ -30,6 +31,8 @@ import { TableScrollWrapper } from '@/components/ui/TableScrollWrapper';
 
 interface SewaAlat {
   id?: string;
+  alat_berat_id?: string | null;
+  no_lambung?: string | null;
   nama_alat: string;
   vendor: string;
   lokasi_proyek: string;
@@ -53,6 +56,7 @@ export default function SewaAlatInternal() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
+    no_lambung: '',
     nama_alat: '',
     vendor: '',
     lokasi_proyek: '',
@@ -68,11 +72,13 @@ export default function SewaAlatInternal() {
   });
 
   const { data: sewaAlatList = [], isLoading, refetch } = useSewaAlatInternal();
+  const { data: alatBeratList = [] } = useAlatBerat();
 
   const filteredList = useMemo(() => {
     if (!searchQuery.trim()) return sewaAlatList;
     const q = searchQuery.toLowerCase();
     return sewaAlatList.filter((item: SewaAlat) =>
+      (item.no_lambung || '').toLowerCase().includes(q) ||
       (item.nama_alat || '').toLowerCase().includes(q) ||
       (item.vendor || '').toLowerCase().includes(q) ||
       (item.lokasi_proyek || '').toLowerCase().includes(q) ||
@@ -97,6 +103,7 @@ export default function SewaAlatInternal() {
 
     setEditingId(sewaAlat.id);
     setFormData({
+      no_lambung: sewaAlat.no_lambung || '',
       nama_alat: sewaAlat.nama_alat,
       vendor: sewaAlat.vendor,
       lokasi_proyek: sewaAlat.lokasi_proyek,
@@ -193,6 +200,7 @@ export default function SewaAlatInternal() {
       }
 
       const newSewaAlat: SewaAlat = {
+        no_lambung: formData.no_lambung?.trim() || null,
         nama_alat: formData.nama_alat.trim(),
         vendor: formData.vendor.trim(),
         lokasi_proyek: formData.lokasi_proyek.trim(),
@@ -228,6 +236,7 @@ export default function SewaAlatInternal() {
       setEditingId(null);
       setIsDialogOpen(false);
       setFormData({
+        no_lambung: '',
         nama_alat: '',
         vendor: '',
         lokasi_proyek: '',
@@ -286,6 +295,7 @@ export default function SewaAlatInternal() {
 
       const tableRows = sewaAlatList.map((item: SewaAlat) => `
         <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">${item.no_lambung || '-'}</td>
           <td style="border: 1px solid #ddd; padding: 8px;">${item.nama_alat || '-'}</td>
           <td style="border: 1px solid #ddd; padding: 8px;">${item.vendor || '-'}</td>
           <td style="border: 1px solid #ddd; padding: 8px;">${item.lokasi_proyek || '-'}</td>
@@ -398,6 +408,7 @@ export default function SewaAlatInternal() {
             <table>
               <thead>
                 <tr>
+                  <th>No. Lambung</th>
                   <th>Nama Alat</th>
                   <th>Vendor</th>
                   <th>Lokasi Proyek</th>
@@ -482,6 +493,7 @@ export default function SewaAlatInternal() {
 
     const dataToExport = sewaAlatList.map((item: SewaAlat, index: number) => ({
       'No': index + 1,
+      'No. Lambung': item.no_lambung || '-',
       'Nama Alat': item.nama_alat,
       'Vendor': item.vendor,
       'Lokasi Proyek': item.lokasi_proyek,
@@ -592,6 +604,7 @@ export default function SewaAlatInternal() {
               if (!open) {
                 setEditingId(null);
                 setFormData({
+                  no_lambung: '',
                   nama_alat: '',
                   vendor: '',
                   lokasi_proyek: '',
@@ -624,15 +637,47 @@ export default function SewaAlatInternal() {
                 </DialogHeader>
                 <div role="document" aria-labelledby="sewa-alat-title" aria-describedby="sewa-alat-description">
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="nama_alat">Nama Alat</Label>
-                      <Input
-                        id="nama_alat"
-                        name="nama_alat"
-                        value={formData.nama_alat}
-                        onChange={handleInputChange}
-                        required
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="no_lambung">No. Lambung (Terhubung Alat Berat)</Label>
+                        <Input
+                          id="no_lambung"
+                          name="no_lambung"
+                          list="alat-berat-options"
+                          value={formData.no_lambung}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const matched = alatBeratList.find(
+                              (a: any) => a.no_lambung?.toLowerCase() === val.trim().toLowerCase()
+                            );
+                            setFormData((prev) => ({
+                              ...prev,
+                              no_lambung: val,
+                              nama_alat: matched?.nama_alat || prev.nama_alat,
+                              lokasi_sebelumnya: matched?.lokasi || prev.lokasi_sebelumnya,
+                            }));
+                          }}
+                          placeholder="Pilih / ketik No. Lambung..."
+                        />
+                        <datalist id="alat-berat-options">
+                          {alatBeratList.map((alat: any) => (
+                            <option key={alat.id} value={alat.no_lambung}>
+                              {alat.no_lambung} - {alat.nama_alat} ({alat.lokasi || 'Tanpa Lokasi'})
+                            </option>
+                          ))}
+                        </datalist>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="nama_alat">Nama Alat</Label>
+                        <Input
+                          id="nama_alat"
+                          name="nama_alat"
+                          value={formData.nama_alat}
+                          onChange={handleInputChange}
+                          placeholder="Nama jenis alat berat"
+                          required
+                        />
+                      </div>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="vendor">Vendor</Label>
@@ -841,6 +886,7 @@ export default function SewaAlatInternal() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="whitespace-nowrap">No. Lambung</TableHead>
                 <TableHead className="whitespace-nowrap">Nama Alat</TableHead>
                 <TableHead className="whitespace-nowrap">Vendor</TableHead>
                 <TableHead className="whitespace-nowrap">Lokasi Proyek</TableHead>
@@ -859,19 +905,20 @@ export default function SewaAlatInternal() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={canShowActions ? 13 : 12} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={canShowActions ? 14 : 13} className="text-center py-6 text-muted-foreground">
                     Memuat data...
                   </TableCell>
                 </TableRow>
               ) : filteredList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canShowActions ? 13 : 12} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={canShowActions ? 14 : 13} className="text-center py-6 text-muted-foreground">
                     {searchQuery ? 'Tidak ada data yang cocok dengan pencarian' : 'Belum ada data sewa alat internal'}
                   </TableCell>
                 </TableRow>
               ) : (
                 paginateData<SewaAlat>(filteredList as SewaAlat[], currentPage, pageSize).map((sewaAlat: SewaAlat) => (
                   <TableRow key={sewaAlat.id}>
+                    <TableCell className="whitespace-nowrap font-mono font-medium text-blue-600">{sewaAlat.no_lambung || '-'}</TableCell>
                     <TableCell className="whitespace-nowrap font-medium">{sewaAlat.nama_alat}</TableCell>
                     <TableCell className="whitespace-nowrap">{sewaAlat.vendor}</TableCell>
                     <TableCell className="whitespace-nowrap">{sewaAlat.lokasi_proyek}</TableCell>

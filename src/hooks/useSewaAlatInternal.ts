@@ -5,6 +5,8 @@ import { withTimeout } from '@/utils/withTimeout';
 
 export interface SewaAlatInternal {
   id?: string;
+  alat_berat_id?: string | null;
+  no_lambung?: string | null;
   nama_alat: string;
   vendor: string;
   lokasi_proyek: string;
@@ -79,6 +81,8 @@ export const useSewaAlatInternal = (options = {}) => {
 
           return {
             id: item.id,
+            alat_berat_id: item.alat_berat_id || null,
+            no_lambung: item.no_lambung || '',
             nama_alat: item.nama_alat,
             vendor: item.vendor,
             lokasi_proyek: item.lokasi_proyek || '',
@@ -140,12 +144,46 @@ export const useAddSewaAlatInternal = () => {
       const biaya_uang_makan_operator = Number(data.biaya_uang_makan_operator) || 0;
       const total_biaya = Number(data.total_biaya) || 0;
 
+      // Check existing equipment in alat_berat
+      let existingAlat: any = null;
+      let targetNoLambung = data.no_lambung?.trim();
+      const targetNamaAlat = data.nama_alat.trim();
+
+      if (targetNoLambung) {
+        const { data: byLambung } = await supabase
+          .from('alat_berat')
+          .select('*')
+          .eq('no_lambung', targetNoLambung);
+        if (byLambung && byLambung.length > 0) {
+          existingAlat = byLambung[0];
+        }
+      }
+
+      if (!existingAlat && targetNamaAlat) {
+        const { data: byNama } = await supabase
+          .from('alat_berat')
+          .select('*')
+          .ilike('nama_alat', targetNamaAlat);
+        if (byNama && byNama.length > 0) {
+          existingAlat = byNama[0];
+          if (!targetNoLambung) {
+            targetNoLambung = existingAlat.no_lambung;
+          }
+        }
+      }
+
+      if (!targetNoLambung) {
+        targetNoLambung = 'SL-' + (Math.floor(100 + Math.random() * 900)).toString();
+      }
+
       // Siapkan data untuk disimpan dengan proper types
       const insertData = {
-        nama_alat: data.nama_alat.trim(),
+        alat_berat_id: existingAlat?.id || null,
+        no_lambung: targetNoLambung,
+        nama_alat: targetNamaAlat,
         vendor: data.vendor.trim(),
         lokasi_proyek: data.lokasi_proyek?.trim() || '',
-        lokasi_sebelumnya: data.lokasi_sebelumnya?.trim() || null,
+        lokasi_sebelumnya: data.lokasi_sebelumnya?.trim() || (existingAlat?.lokasi || null),
         tanggal_sewa: data.tanggal_sewa,
         tanggal_kembali: data.tanggal_kembali,
         biaya_sewa: biaya_sewa,
@@ -171,6 +209,35 @@ export const useAddSewaAlatInternal = () => {
         
         const singleResult = Array.isArray(result) ? result[0] : result;
         console.log('Data sewa alat internal berhasil disimpan:', singleResult);
+
+        // Sinkronisasi ke Data Alat Berat dengan status "sewa luar"
+        if (existingAlat) {
+          await supabase
+            .from('alat_berat')
+            .update({
+              status: 'sewa luar',
+              lokasi: data.lokasi_proyek?.trim() || existingAlat.lokasi,
+              lokasi_sebelumnya: data.lokasi_sebelumnya?.trim() || existingAlat.lokasi || 'Pool BTG',
+              keterangan: data.keterangan ? `${data.keterangan} (Sewa Internal dari ${data.vendor})` : `Sewa Internal dari ${data.vendor}`,
+            })
+            .eq('id', existingAlat.id);
+        } else {
+          await supabase
+            .from('alat_berat')
+            .insert({
+              nama_alat: targetNamaAlat,
+              no_lambung: targetNoLambung,
+              lokasi: data.lokasi_proyek?.trim() || 'Site',
+              lokasi_sebelumnya: data.lokasi_sebelumnya?.trim() || 'Pool BTG',
+              status: 'sewa luar',
+              merk: data.vendor?.trim() || 'Sewa Luar',
+              tipe: 'Sewa Internal',
+              kondisi: 'Baik',
+              fisik_alat: 100,
+              keterangan: `Alat sewa internal dari ${data.vendor}`,
+            });
+        }
+
         return singleResult;
       } catch (error: any) {
         console.error('Error saat menyimpan data sewa alat internal:', {
@@ -187,9 +254,11 @@ export const useAddSewaAlatInternal = () => {
       queryClient.invalidateQueries({ 
         queryKey: [SEWA_ALAT_INTERNAL_QUERY_KEY] 
       });
+      queryClient.invalidateQueries({ queryKey: ['alat-berat'] });
+      queryClient.invalidateQueries({ queryKey: ['alatBerat'] });
       
       toast.success('Data sewa alat internal berhasil disimpan', {
-        description: 'Data telah berhasil ditambahkan ke database.'
+        description: 'Data telah berhasil ditambahkan dan terhubung dengan Data Alat Berat (Status: Sewa Luar).'
       });
     },
     onError: (error: Error) => {
@@ -217,6 +286,7 @@ export const useUpdateSewaAlatInternal = () => {
       const total_biaya = Number(data.total_biaya) || 0;
 
       const updateData = {
+        no_lambung: data.no_lambung?.trim() || undefined,
         nama_alat: data.nama_alat.trim(),
         vendor: data.vendor.trim(),
         lokasi_proyek: data.lokasi_proyek?.trim() || '',
@@ -246,6 +316,19 @@ export const useUpdateSewaAlatInternal = () => {
         
         const singleResult = Array.isArray(result) ? result[0] : result;
         console.log('Data sewa alat internal berhasil diperbarui:', singleResult);
+
+        // Sinkronisasi update ke alat_berat jika no_lambung ada
+        if (data.no_lambung) {
+          await supabase
+            .from('alat_berat')
+            .update({
+              status: 'sewa luar',
+              lokasi: data.lokasi_proyek?.trim() || '',
+              lokasi_sebelumnya: data.lokasi_sebelumnya?.trim() || 'Pool BTG',
+            })
+            .eq('no_lambung', data.no_lambung);
+        }
+
         return singleResult;
       } catch (error: any) {
         console.error('Error saat memperbarui data sewa alat internal:', {
@@ -262,9 +345,11 @@ export const useUpdateSewaAlatInternal = () => {
       queryClient.invalidateQueries({ 
         queryKey: [SEWA_ALAT_INTERNAL_QUERY_KEY] 
       });
+      queryClient.invalidateQueries({ queryKey: ['alat-berat'] });
+      queryClient.invalidateQueries({ queryKey: ['alatBerat'] });
       
       toast.success('Data sewa alat internal berhasil diperbarui', {
-        description: 'Data telah berhasil diperbarui di database.'
+        description: 'Data telah berhasil diperbarui dan disinkronkan ke Data Alat Berat.'
       });
     },
     onError: (error: Error) => {
@@ -284,6 +369,14 @@ export const useDeleteSewaAlatInternal = () => {
       console.log('Mencoba menghapus data sewa alat internal:', id);
       
       try {
+        // Ambil data sewa sebelum dihapus untuk mengetahui no_lambung alat
+        const { data: existingRows } = await supabase
+          .from('sewa_alat_internal')
+          .select('*')
+          .eq('id', id);
+        
+        const existingItem = Array.isArray(existingRows) ? existingRows[0] : existingRows;
+
         const { data: result, error } = await supabase
           .from('sewa_alat_internal')
           .delete()
@@ -294,6 +387,18 @@ export const useDeleteSewaAlatInternal = () => {
         
         const singleResult = Array.isArray(result) ? result[0] : result;
         console.log('Data sewa alat internal berhasil dihapus:', singleResult);
+
+        // Jika terhubung ke alat berat, kembalikan statusnya ke standby
+        if (existingItem?.no_lambung) {
+          await supabase
+            .from('alat_berat')
+            .update({
+              status: 'standby',
+              lokasi: existingItem.lokasi_sebelumnya || 'Pool BTG',
+            })
+            .eq('no_lambung', existingItem.no_lambung);
+        }
+
         return singleResult;
       } catch (error: any) {
         console.error('Error saat menghapus data sewa alat internal:', {
@@ -310,9 +415,11 @@ export const useDeleteSewaAlatInternal = () => {
       queryClient.invalidateQueries({ 
         queryKey: [SEWA_ALAT_INTERNAL_QUERY_KEY] 
       });
+      queryClient.invalidateQueries({ queryKey: ['alat-berat'] });
+      queryClient.invalidateQueries({ queryKey: ['alatBerat'] });
       
       toast.success('Data sewa alat internal berhasil dihapus', {
-        description: 'Data telah berhasil dihapus dari database.'
+        description: 'Data telah berhasil dihapus dan status alat berat dikembalikan ke Standby.'
       });
     },
     onError: (error: Error) => {
