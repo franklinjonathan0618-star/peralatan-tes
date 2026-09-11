@@ -303,11 +303,11 @@ const Dashboard = () => {
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-center">
                   <span className="text-2xl font-bold text-orange-600">{stats.kanibalCount}</span>
-                  <span className="text-xs text-muted-foreground">Kanibal</span>
+                  <span className="text-xs text-muted-foreground">Kanibal/Toko</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <span className="text-2xl font-bold text-red-600">{stats.terjualCount}</span>
-                  <span className="text-xs text-muted-foreground">Toko</span>
+                  <span className="text-xs text-muted-foreground">Dijual</span>
                 </div>
               </div>
             </CardContent>

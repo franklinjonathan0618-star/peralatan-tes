@@ -783,7 +783,7 @@ const DataAlatPendukung = () => {
                           ? 'bg-red-100 text-red-800'
                           : 'bg-green-100 text-green-800'
                         }`}>
-                        {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Standby'}
+                        {item.status === 'kanibal' ? 'Kanibal/Toko' : item.status === 'toko' ? 'Dijual' : item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Standby'}
                       </span>
                     </TableCell>
                     <TableCell>

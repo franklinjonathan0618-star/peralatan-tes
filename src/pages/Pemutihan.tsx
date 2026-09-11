@@ -27,9 +27,9 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
   const sc = statusConfig[status] || statusConfig.pending;
 
   const statusAlatConfig: Record<string, { label: string; cls: string }> = {
-    toko: { label: 'Toko', cls: 'bg-red-100 text-red-800' },
-    kanibal: { label: 'Kanibal', cls: 'bg-orange-100 text-orange-800' },
-    pemutihan: { label: 'Toko', cls: 'bg-purple-100 text-purple-800' },
+    toko: { label: 'Dijual', cls: 'bg-red-100 text-red-800' },
+    kanibal: { label: 'Kanibal/Toko', cls: 'bg-orange-100 text-orange-800' },
+    pemutihan: { label: 'Dijual', cls: 'bg-purple-100 text-purple-800' },
   };
   const sac = statusAlatConfig[pemutihan.status] || statusAlatConfig.toko;
 
@@ -39,7 +39,7 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
     targetStatus: 'kanibal' | 'toko'
   ) => {
     const statusLabel =
-      targetStatus === 'toko' ? 'Toko' : 'Kanibal';
+      targetStatus === 'toko' ? 'Dijual' : 'Kanibal/Toko';
 
     if (
       !confirm(
@@ -125,7 +125,7 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
                     handleStatusUpdate('kanibal');
                   }}
                 >
-                  Kanibal
+                  Kanibal/Toko
                 </Button>
                 <Button
                   size="sm"
@@ -136,7 +136,7 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
                     handleStatusUpdate('toko');
                   }}
                 >
-                  Toko
+                  Dijual
                 </Button>
               </>
             )}

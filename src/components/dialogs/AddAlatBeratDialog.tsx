@@ -263,8 +263,8 @@ export function AddAlatBeratDialog({ onSubmit, className }: AddAlatBeratDialogPr
                   <SelectContent>
                     <SelectItem value="standby">Standby</SelectItem>
                     <SelectItem value="sedang digunakan">Sedang Digunakan</SelectItem>
-                    <SelectItem value="kanibal">Kanibal</SelectItem>
-                    <SelectItem value="toko">Toko</SelectItem>
+                    <SelectItem value="kanibal">Kanibal/Toko</SelectItem>
+                    <SelectItem value="toko">Dijual</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

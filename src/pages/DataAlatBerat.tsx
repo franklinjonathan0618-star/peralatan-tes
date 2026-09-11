@@ -896,11 +896,11 @@ const DataAlatBerat = () => {
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-center">
                 <span className="text-2xl font-bold text-orange-600">{kanibalCount}</span>
-                <span className="text-xs text-muted-foreground">Kanibal</span>
+                <span className="text-xs text-muted-foreground">Kanibal/Toko</span>
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-2xl font-bold text-red-600">{terjualCount}</span>
-                <span className="text-xs text-muted-foreground">Toko</span>
+                <span className="text-xs text-muted-foreground">Dijual</span>
               </div>
             </div>
           </CardContent>
@@ -1049,7 +1049,7 @@ const DataAlatBerat = () => {
                               ? 'bg-red-100 text-red-800'
                               : 'bg-green-100 text-green-800'
                             }`}>
-                            {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Standby'}
+                            {item.status === 'kanibal' ? 'Kanibal/Toko' : item.status === 'toko' ? 'Dijual' : item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Standby'}
                           </span>
                         </TableCell>
                         <TableCell>{item.serviceTerakhir ? formatDateDisplay(item.serviceTerakhir) : '-'}</TableCell>

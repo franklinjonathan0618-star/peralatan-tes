@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import {
   Clock, Fuel, Wrench, ClipboardList, X, TrendingUp, AlertCircle, Loader2, Printer, FileSpreadsheet,
   ShieldCheck, FileText, Plus, Trash2, Edit3, ExternalLink, UploadCloud, Calendar, ChevronLeft, ChevronRight,
@@ -45,14 +45,14 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   menunggu_sparepart: { label: 'Menunggu Sparepart', color: 'bg-orange-100 text-orange-700 border border-orange-200' },
   dibatalkan: { label: 'Dibatalkan', color: 'bg-red-100 text-red-700 border border-red-200' },
   pending: { label: 'Pending', color: 'bg-gray-100 text-gray-700 border border-gray-200' },
-  aktif: { label: '✅ Aktif', color: 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold' },
-  kadaluarsa: { label: '❌ Kadaluarsa', color: 'bg-rose-100 text-rose-800 border border-rose-300 font-semibold' },
+  aktif: { label: 'âœ… Aktif', color: 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold' },
+  kadaluarsa: { label: 'âŒ Kadaluarsa', color: 'bg-rose-100 text-rose-800 border border-rose-300 font-semibold' },
   // 'segera perpanjang' (spasi) = dari view DB
-  'segera perpanjang': { label: '⚠️ Segera Perpanjang', color: 'bg-amber-100 text-amber-900 border border-amber-400 font-semibold' },
+  'segera perpanjang': { label: 'âš ï¸ Segera Perpanjang', color: 'bg-amber-100 text-amber-900 border border-amber-400 font-semibold' },
   // alias dengan underscore (fallback)
-  segera_perpanjang: { label: '⚠️ Segera Perpanjang', color: 'bg-amber-100 text-amber-900 border border-amber-400 font-semibold' },
-  diajukan: { label: '🔄 Diajukan', color: 'bg-sky-100 text-sky-800 border border-sky-300 font-semibold' },
-  ditolak: { label: '🚫 Ditolak', color: 'bg-slate-100 text-slate-700 border border-slate-300 font-semibold' },
+  segera_perpanjang: { label: 'âš ï¸ Segera Perpanjang', color: 'bg-amber-100 text-amber-900 border border-amber-400 font-semibold' },
+  diajukan: { label: 'ðŸ”„ Diajukan', color: 'bg-sky-100 text-sky-800 border border-sky-300 font-semibold' },
+  ditolak: { label: 'ðŸš« Ditolak', color: 'bg-slate-100 text-slate-700 border border-slate-300 font-semibold' },
 };
 
 // Helper: warna badge sisa hari berdasarkan jumlah hari
@@ -62,7 +62,7 @@ const getSisaHariBadge = (sisaHari: number | undefined) => {
     return { text: `Lewat ${Math.abs(sisaHari)} hari`, className: 'text-rose-700 bg-rose-50 border-rose-200' };
   }
   if (sisaHari <= 30) {
-    return { text: `⚠️ Sisa ${sisaHari} hari`, className: 'text-amber-800 bg-amber-50 border-amber-300' };
+    return { text: `âš ï¸ Sisa ${sisaHari} hari`, className: 'text-amber-800 bg-amber-50 border-amber-300' };
   }
   if (sisaHari <= 60) {
     return { text: `Sisa ${sisaHari} hari`, className: 'text-yellow-700 bg-yellow-50 border-yellow-200' };
@@ -138,7 +138,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
       </head>
       <body>
         <div class="header">
-          <h1>📋 Detail Alat: ${namaAlat}</h1>
+          <h1>ðŸ“‹ Detail Alat: ${namaAlat}</h1>
           <p>No. Lambung: ${noLambung || '-'}</p>
         </div>
         <div style="height:8px"></div>
@@ -146,7 +146,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
 
         <!-- DOKUMEN SILO -->
         <div class="section">
-          <div class="section-title"><span class="icon">📜</span> Dokumen SILO</div>
+          <div class="section-title"><span class="icon">ðŸ“œ</span> Dokumen SILO</div>
           ${siloList.length === 0 ? '<p style="padding:12px;color:#94a3b8;text-align:center">Belum ada dokumen SILO</p>' : `
           <table>
             <thead><tr>
@@ -165,7 +165,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
 
         <!-- JAM PEMAKAIAN -->
         <div class="section">
-          <div class="section-title"><span class="icon">🕐</span> Jam Pemakaian</div>
+          <div class="section-title"><span class="icon">ðŸ•</span> Jam Pemakaian</div>
           <div class="stats-grid stats-grid-2">
             <div class="stat-card"><div class="stat-value">${jamStats.totalJam}</div><div class="stat-label">Total Jam</div></div>
             <div class="stat-card"><div class="stat-value">${jamStats.totalEntries}</div><div class="stat-label">Total Entri Timesheet</div></div>
@@ -174,7 +174,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
 
         <!-- DATA KANIBAL / PEMUTIHAN -->
         <div class="section">
-          <div class="section-title"><span class="icon">📦</span> Data Kanibal / Pemutihan Alat</div>
+          <div class="section-title"><span class="icon">ðŸ“¦</span> Data Kanibal / Pemutihan Alat</div>
           ${kanibalData.length === 0 ? '<p style="padding:12px;color:#94a3b8;text-align:center">Belum ada data kanibal / pemutihan</p>' : `
           <table>
             <thead><tr>
@@ -439,7 +439,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
     { id: 'bbm', label: 'BBM & Oli', icon: <Fuel className="h-3.5 w-3.5" />, count: `${bbmStats.bbm} L` },
     { id: 'sparepart', label: 'Sparepart', icon: <Wrench className="h-3.5 w-3.5" />, count: sparepartStats.items.length },
     { id: 'perbaikan', label: 'Riwayat Perbaikan', icon: <ClipboardList className="h-3.5 w-3.5" />, count: riwayatPerbaikan.length },
-    { id: 'kanibal', label: 'Kanibal', icon: <Boxes className="h-3.5 w-3.5 text-amber-600" />, count: kanibalData.length },
+    { id: 'kanibal', label: 'Kanibal/Toko', icon: <Boxes className="h-3.5 w-3.5 text-amber-600" />, count: kanibalData.length },
   ];
 
   return (
@@ -495,20 +495,18 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-all border-b-2 shrink-0 justify-center whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 bg-blue-50/60 font-semibold'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                  }`}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-all border-b-2 shrink-0 justify-center whitespace-nowrap ${activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600 bg-blue-50/60 font-semibold'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    }`}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
                   {tab.count !== undefined && (
-                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                      activeTab === tab.id
-                        ? 'bg-blue-100 text-blue-600'
-                        : 'bg-slate-100 text-slate-500'
-                    }`}>
+                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${activeTab === tab.id
+                      ? 'bg-blue-100 text-blue-600'
+                      : 'bg-slate-100 text-slate-500'
+                      }`}>
                       {tab.count}
                     </span>
                   )}
@@ -578,8 +576,8 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                                     isUrgent
                                       ? 'bg-amber-50/60 border-l-4 border-l-amber-400'
                                       : isExpired
-                                      ? 'bg-rose-50/50 border-l-4 border-l-rose-400'
-                                      : i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
+                                        ? 'bg-rose-50/50 border-l-4 border-l-rose-400'
+                                        : i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
                                   }
                                 >
                                   <td className="px-3 py-2">
@@ -725,10 +723,10 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                     ) : (
                       <>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                          <ConsumptionCard label="Total BBM" value={bbmStats.bbm} unit="Liter" bgColor="bg-orange-50 border-orange-100" icon="⛽" />
-                          <ConsumptionCard label="Oli SAE 40" value={bbmStats.oli40} unit="Liter" bgColor="bg-amber-50 border-amber-100" icon="🛢️" />
-                          <ConsumptionCard label="Oli SAE 10" value={bbmStats.oli10} unit="Liter" bgColor="bg-yellow-50 border-yellow-100" icon="🛢️" />
-                          <ConsumptionCard label="Oli SAE 90" value={bbmStats.oli90} unit="Liter" bgColor="bg-lime-50 border-lime-100" icon="🛢️" />
+                          <ConsumptionCard label="Total BBM" value={bbmStats.bbm} unit="Liter" bgColor="bg-orange-50 border-orange-100" icon="â›½" />
+                          <ConsumptionCard label="Oli SAE 40" value={bbmStats.oli40} unit="Liter" bgColor="bg-amber-50 border-amber-100" icon="ðŸ›¢ï¸" />
+                          <ConsumptionCard label="Oli SAE 10" value={bbmStats.oli10} unit="Liter" bgColor="bg-yellow-50 border-yellow-100" icon="ðŸ›¢ï¸" />
+                          <ConsumptionCard label="Oli SAE 90" value={bbmStats.oli90} unit="Liter" bgColor="bg-lime-50 border-lime-100" icon="ðŸ›¢ï¸" />
                         </div>
                         <MouseSliderWrapper minWidth="520px" className="rounded-lg border border-slate-200">
                           <table className="w-full text-xs min-w-[520px]">
@@ -897,7 +895,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                                     <td className="px-3 py-2 whitespace-nowrap">
                                       {item.status === 'kanibal' ? (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-300">
-                                          Kanibal
+                                          Kanibal/Toko
                                         </span>
                                       ) : item.status === 'pemutihan' ? (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300">
@@ -905,7 +903,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                                         </span>
                                       ) : (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300">
-                                          {item.status || 'Toko'}
+                                          {item.status === 'toko' ? 'Dijual' : (item.status || 'Dijual')}
                                         </span>
                                       )}
                                     </td>
@@ -1137,7 +1135,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
   );
 };
 
-// Helper sub-component untuk slider mouse (Drag, Scroll wheel, Panah ‹ ›)
+// Helper sub-component untuk slider mouse (Drag, Scroll wheel, Panah â€¹ â€º)
 interface MouseSliderWrapperProps {
   children: React.ReactNode;
   className?: string;
@@ -1262,7 +1260,7 @@ const MouseSliderWrapper: React.FC<MouseSliderWrapperProps> = ({ children, class
 
   return (
     <div className="relative group/slider w-full" onClick={(e) => e.stopPropagation()}>
-      {/* Tombol Panah Kiri ‹ */}
+      {/* Tombol Panah Kiri â€¹ */}
       {canScrollLeft && (
         <button
           type="button"
@@ -1295,7 +1293,7 @@ const MouseSliderWrapper: React.FC<MouseSliderWrapperProps> = ({ children, class
         </div>
       </div>
 
-      {/* Tombol Panah Kanan › */}
+      {/* Tombol Panah Kanan â€º */}
       {canScrollRight && (
         <button
           type="button"
