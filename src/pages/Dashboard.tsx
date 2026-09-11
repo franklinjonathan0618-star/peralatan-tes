@@ -100,7 +100,7 @@ const Dashboard = () => {
     const perbaikanProses = perbaikanData.filter(p => p.status === 'dalam_perbaikan').length;
     const totalTimesheet = timesheetData.length;
     const kanibalCount = pemutihanData.filter(p => p.status === 'kanibal').length;
-    const terjualCount = pemutihanData.filter(p => p.status === 'toko').length;
+    const terjualCount = pemutihanData.filter(p => p.status === 'toko' || p.status === 'pemutihan').length;
 
     return {
       totalAlatBerat,

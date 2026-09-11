@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Clock, Fuel, Wrench, ClipboardList, X, TrendingUp, AlertCircle, Loader2, Printer, FileSpreadsheet,
   ShieldCheck, FileText, Plus, Trash2, Edit3, ExternalLink, UploadCloud, Calendar, ChevronLeft, ChevronRight,
@@ -185,7 +185,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                 <td>${k.tanggal ? formatDate(k.tanggal) : '-'}</td>
                 <td>${k.merk || '-'} ${k.tipe ? '/ ' + k.tipe : ''}</td>
                 <td style="font-weight:600;color:#c2410c">${k.part_terlepas || '-'}</td>
-                <td><span class="badge ${k.status === 'kanibal' ? 'badge-orange' : 'badge-gray'}">${k.status || '-'}</span></td>
+                <td><span class="badge ${k.status === 'kanibal' ? 'badge-orange' : 'badge-gray'}">${k.status === 'kanibal' ? 'Kanibal/Toko' : 'Dijual'}</span></td>
                 <td><span class="badge ${k.status_pemutihan === 'approved' ? 'badge-green' : k.status_pemutihan === 'rejected' ? 'badge-red' : 'badge-yellow'}">${k.status_pemutihan === 'approved' ? 'Disetujui' : k.status_pemutihan === 'rejected' ? 'Ditolak' : 'Menunggu'}</span></td>
                 <td>${k.keterangan || '-'}</td>
               </tr>`).join('')}
@@ -240,7 +240,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
       'Merk': k.merk || '-',
       'Tipe': k.tipe || '-',
       'Part Terlepas': k.part_terlepas || '-',
-      'Status': k.status || '-',
+      'Status': k.status === 'kanibal' ? 'Kanibal/Toko' : 'Dijual',
       'Status Pemutihan': k.status_pemutihan || 'pending',
       'Keterangan': k.keterangan || '-'
     }));
@@ -248,7 +248,7 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
     const sheets = [
       { data: siloDataSheet, name: 'Dokumen SILO' },
       { data: jamData, name: 'Jam Pemakaian' },
-      { data: kanibalSheet, name: 'Kanibal' },
+      { data: kanibalSheet, name: 'Kanibal/Toko' },
     ];
 
     try {
@@ -897,13 +897,9 @@ const AlatDetailPopup: React.FC<AlatDetailPopupProps> = ({ noLambung, namaAlat, 
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-300">
                                           Kanibal/Toko
                                         </span>
-                                      ) : item.status === 'pemutihan' ? (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300">
-                                          Pemutihan
-                                        </span>
                                       ) : (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300">
-                                          {item.status === 'toko' ? 'Dijual' : (item.status || 'Dijual')}
+                                          Dijual
                                         </span>
                                       )}
                                     </td>

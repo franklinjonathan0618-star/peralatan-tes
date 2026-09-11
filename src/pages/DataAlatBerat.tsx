@@ -68,7 +68,7 @@ const DataAlatBerat = () => {
 
   // Calculate pemutihan statistics
   const kanibalCount = pemutihanData.filter(p => p.status === 'kanibal').length;
-  const terjualCount = pemutihanData.filter(p => p.status === 'toko').length;
+  const terjualCount = pemutihanData.filter(p => p.status === 'toko' || p.status === 'pemutihan').length;
 
   // State untuk data yang difilter
   const [filteredData, setFilteredData] = useState<LocalAlatBerat[]>([]);
@@ -1045,11 +1045,11 @@ const DataAlatBerat = () => {
                         <TableCell>
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === 'sedang digunakan'
                             ? 'bg-blue-100 text-blue-800'
-                            : item.status === 'kanibal' || item.status === 'pemutihan'
+                            : item.status === 'kanibal' || item.status === 'pemutihan' || item.status === 'toko'
                               ? 'bg-red-100 text-red-800'
                               : 'bg-green-100 text-green-800'
                             }`}>
-                            {item.status === 'kanibal' ? 'Kanibal/Toko' : item.status === 'toko' ? 'Dijual' : item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Standby'}
+                            {item.status === 'kanibal' ? 'Kanibal/Toko' : (item.status === 'toko' || item.status === 'pemutihan') ? 'Dijual' : item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Standby'}
                           </span>
                         </TableCell>
                         <TableCell>{item.serviceTerakhir ? formatDateDisplay(item.serviceTerakhir) : '-'}</TableCell>

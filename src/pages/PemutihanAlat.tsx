@@ -53,6 +53,8 @@ const PemutihanAlat = () => {
 
   const filteredData = pemutihanData.filter(item => {
     const searchLower = searchQuery.toLowerCase();
+    const statusLower = item.status?.toLowerCase() || '';
+    const statusDisplay = (statusLower === 'kanibal' || statusLower === 'kanibal/toko') ? 'kanibal/toko' : 'dijual';
     return (
       item.no_lambung?.toLowerCase().includes(searchLower) ||
       item.nama_alat?.toLowerCase().includes(searchLower) ||
@@ -60,6 +62,7 @@ const PemutihanAlat = () => {
       item.tipe?.toLowerCase().includes(searchLower) ||
       item.part_terlepas?.toLowerCase().includes(searchLower) ||
       item.status?.toLowerCase().includes(searchLower) ||
+      statusDisplay.includes(searchLower) ||
       (item.tanggal && new Date(item.tanggal).toLocaleDateString('id-ID').includes(searchLower))
     );
   });
@@ -86,13 +89,15 @@ const PemutihanAlat = () => {
       ? item.part_terlepas.split(',').map(p => p.trim()).filter(p => p !== '')
       : [''];
 
+    const itemStatus = item.status?.toLowerCase() === 'kanibal' ? 'kanibal' : 'toko';
+
     setFormData({
       no_lambung: item.no_lambung,
       nama_alat: item.nama_alat,
       merk: item.merk || '',
       tipe: item.tipe || '',
       part_terlepas: partsArray.length > 0 ? partsArray : [''],
-      status: item.status,
+      status: itemStatus,
       keterangan: item.keterangan || '',
       tanggal: item.tanggal || '',
     });
@@ -157,14 +162,12 @@ const PemutihanAlat = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'toko') {
-      return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Dijual</span>;
-    } else if (statusLower === 'kanibal') {
+  const getStatusBadge = (status?: string) => {
+    const statusLower = status?.toLowerCase() || '';
+    if (statusLower === 'kanibal' || statusLower === 'kanibal/toko') {
       return <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-200 text-orange-800">Kanibal/Toko</span>;
     }
-    return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{status}</span>;
+    return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Dijual</span>;
   };
 
   const getPemutihanStatusBadge = (status?: string) => {
@@ -199,6 +202,8 @@ const PemutihanAlat = () => {
 
   const handlePrintSingle = (item: Pemutihan) => {
     const printWindow = window.open('', '', 'width=800,height=600');
+    const statusLower = item.status?.toLowerCase() || '';
+    const displayStatus = (statusLower === 'kanibal' || statusLower === 'kanibal/toko') ? 'Kanibal/Toko' : 'Dijual';
     if (printWindow) {
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -250,7 +255,7 @@ const PemutihanAlat = () => {
                   <td>${item.merk || '-'}</td>
                   <td>${item.tipe || '-'}</td>
                   <td>${item.part_terlepas || '-'}</td>
-                  <td>${item.status || '-'}</td>
+                  <td>${displayStatus}</td>
                   <td>${item.status_pemutihan || 'Menunggu'}</td>
                   <td>${item.keterangan || '-'}</td>
                 </tr>

@@ -26,15 +26,13 @@ function PemutihanRow({ pemutihan, canApprove }: { pemutihan: Pemutihan; canAppr
   };
   const sc = statusConfig[status] || statusConfig.pending;
 
-  const statusAlatConfig: Record<string, { label: string; cls: string }> = {
-    toko: { label: 'Dijual', cls: 'bg-red-100 text-red-800' },
-    kanibal: { label: 'Kanibal/Toko', cls: 'bg-orange-100 text-orange-800' },
-    pemutihan: { label: 'Dijual', cls: 'bg-purple-100 text-purple-800' },
-  };
-  const sac = statusAlatConfig[pemutihan.status] || statusAlatConfig.toko;
+  const statusKey = pemutihan.status?.toLowerCase() || 'toko';
+  const sac = (statusKey === 'kanibal' || statusKey === 'kanibal/toko')
+    ? { label: 'Kanibal/Toko', cls: 'bg-orange-100 text-orange-800' }
+    : { label: 'Dijual', cls: 'bg-red-100 text-red-800' };
 
   // Aksi lanjutan setelah pemutihan disetujui di halaman Persetujuan:
-  // pilih apakah alat menjadi "Kanibal" atau "Pemutihan"
+  // pilih apakah alat menjadi "Kanibal/Toko" atau "Dijual"
   const handleStatusUpdate = async (
     targetStatus: 'kanibal' | 'toko'
   ) => {
