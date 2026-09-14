@@ -31,13 +31,6 @@ const menuItems: MenuItem[] = [
     items: [
       { title: 'Data Alat Berat', path: '/data-alat-berat' },
       { title: 'Data Alat Pendukung', path: '/data-alat-pendukung' },
-      {
-        title: 'Sewa Alat',
-        items: [
-          { title: 'Sewa Alat Internal', path: '/sewa-alat-internal' },
-          { title: 'Sewa Alat Eksternal', path: '/sewa-alat-eksternal' },
-        ],
-      },
       { title: 'RPA', path: '/rpa' },
       { title: 'Riwayat Penggunaan Alat', path: '/riwayat-penggunaan-alat' },
       { title: 'Persetujuan Pemutihan Alat', path: '/pemutihan-alat' },
@@ -55,6 +48,13 @@ const menuItems: MenuItem[] = [
   {
     title: 'Laporan Bulanan',
     items: [
+      {
+        title: 'Sewa Alat',
+        items: [
+          { title: 'Sewa Alat Internal', path: '/sewa-alat-internal' },
+          { title: 'Sewa Alat Eksternal', path: '/sewa-alat-eksternal' },
+        ],
+      },
       { title: 'Stock BBM', path: '/stock-bbm' },
       { title: 'Stock Oli', path: '/stock-oli' },
       { title: 'Stock Sparepart', path: '/stock-sparepart' },
